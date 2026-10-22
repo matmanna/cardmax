@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.12
+      - run: bun install --frozen-lockfile
+      - run: bunx biome ci packages/core
+      - run: bun test packages/core
+      - run: bun run check-types
+        env:
+          # Placeholders so the web build validates. CI never connects to a database.
+          BETTER_AUTH_SECRET: ci-placeholder-secret-at-least-32-characters
+          BETTER_AUTH_URL: http://localhost:3001
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      - name: Build extension
+        run: bun run build
+        working-directory: apps/extension
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cardmax-extension-chrome
+          path: apps/extension/.output/chrome-mv3
