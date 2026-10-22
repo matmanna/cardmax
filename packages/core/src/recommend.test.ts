@@ -143,3 +143,19 @@ describe("recommend", () => {
 		expect(results.map((r) => r.cardId)).toEqual(["flat-2"]);
 	});
 });
+
+describe("reason wording", () => {
+	test("says percent for cash back and x for points", () => {
+		const results = recommend(
+			wallet,
+			catalog,
+			merchant("kroger.com", "grocery"),
+			100,
+		);
+		const reason = (id: string) => results.find((r) => r.cardId === id)?.reason;
+		expect(reason("flat-2")).toBe("2% back on everything");
+		expect(reason("grocer-4x")).toBe(
+			"4x points on grocery (up to $25,000 a year)",
+		);
+	});
+});

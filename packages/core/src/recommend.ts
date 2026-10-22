@@ -16,13 +16,16 @@ function describe(
 	rule: EarnRule | undefined,
 	multiplier: number,
 	merchant: MerchantGuess,
+	currency: CardProduct["rewardCurrency"],
 ): string {
-	if (!rule) return `${multiplier}x base rate`;
+	const rate =
+		currency === "cash" ? `${multiplier}% back` : `${multiplier}x points`;
+	if (!rule) return `${rate} on everything`;
 	const where = rule.onlyMerchants ? merchant.domain : merchant.category;
 	const cap = rule.capUsd
 		? ` (up to $${rule.capUsd.toLocaleString("en-US")} a year)`
 		: "";
-	return `${multiplier}x on ${where}${cap}`;
+	return `${rate} on ${where}${cap}`;
 }
 
 // Ranks the user's cards for one purchase. Runs on device, makes no network calls.
@@ -51,7 +54,12 @@ export function recommend(
 				cardId: product.id,
 				multiplier,
 				estimatedRewardUsd: Math.round(amountUsd * multiplier * cents) / 100,
-				reason: describe(bonus ? rule : undefined, multiplier, merchant),
+				reason: describe(
+					bonus ? rule : undefined,
+					multiplier,
+					merchant,
+					product.rewardCurrency,
+				),
 			};
 		})
 		.sort((a, b) => b.estimatedRewardUsd - a.estimatedRewardUsd);

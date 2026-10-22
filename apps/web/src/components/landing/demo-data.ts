@@ -56,6 +56,12 @@ export function cardLabel(cardId: string): string {
 	return card ? `${card.issuer} ${card.name}` : cardId;
 }
 
+export function rate(cardId: string, multiplier: number): string {
+	return byId.get(cardId)?.rewardCurrency === "cash"
+		? `${multiplier}%`
+		: `${multiplier}x`;
+}
+
 export function runDemo(store: DemoStore) {
 	const merchant = guessMerchant(store.domain);
 	const ranked = recommend(

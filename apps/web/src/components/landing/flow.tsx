@@ -1,7 +1,7 @@
 import { Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { cardLabel, demoStores, runDemo, usd } from "./demo-data";
+import { cardLabel, demoStores, rate, runDemo, usd } from "./demo-data";
 import { useInView, usePrefersReducedMotion } from "./motion";
 
 const STEPS = [
@@ -155,7 +155,9 @@ export function Flow() {
 					<span>
 						Codes as {merchant.category.replace("_", " ")}.{" "}
 						{ranked
-							.map((r) => `${cardLabel(r.cardId)} ${r.multiplier}x`)
+							.map(
+								(r) => `${cardLabel(r.cardId)} ${rate(r.cardId, r.multiplier)}`,
+							)
 							.join(" · ")}
 					</span>
 				</button>
