@@ -253,15 +253,17 @@ test.describe("automatic on this site", () => {
 		await seedWallet(["citi-double-cash", "amex-gold"]);
 	});
 
-	test("the popup shows the site as on when Chrome has access", async ({
+	test("known stores offer one switch for every supported store", async ({
 		openPopupFor,
 		openStore,
 	}) => {
+		// The e2e build grants only the four fixture hosts, not the whole list,
+		// so the supported-stores switch reads as off.
 		const popup = await openPopupFor(await openStore("bestbuy"));
-		await expect(popup.getByText("Automatic on bestbuy.com")).toBeVisible();
-		await expect(
-			popup.getByRole("switch", { name: /bestbuy\.com/ }),
-		).toHaveAttribute("aria-checked", "true");
+		const toggle = popup.getByRole("switch", {
+			name: "Open at checkout on supported stores",
+		});
+		await expect(toggle).toHaveAttribute("aria-checked", "false");
 	});
 
 	test("a checkout page sets the toolbar badge to the best card", async ({

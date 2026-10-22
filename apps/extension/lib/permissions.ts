@@ -1,3 +1,5 @@
+import { supportedStoreOrigins } from "@cardmax/core";
+
 // Per-site access. origin is like "https://www.example.com".
 export async function hasSiteAccess(origin: string): Promise<boolean> {
 	return browser.permissions.contains({ origins: [`${origin}/*`] });
@@ -21,4 +23,18 @@ export async function removeAllSiteAccess(): Promise<void> {
 			browser.permissions.remove({ origins: [origin] }).catch(() => false),
 		),
 	);
+}
+
+// All supported stores at once (see supportedStoreOrigins in core).
+export async function hasSupportedStores(): Promise<boolean> {
+	return browser.permissions.contains({ origins: supportedStoreOrigins });
+}
+
+// Call straight from a click handler, before any other await.
+export async function requestSupportedStores(): Promise<boolean> {
+	return browser.permissions.request({ origins: supportedStoreOrigins });
+}
+
+export async function removeSupportedStores(): Promise<boolean> {
+	return browser.permissions.remove({ origins: supportedStoreOrigins });
 }
