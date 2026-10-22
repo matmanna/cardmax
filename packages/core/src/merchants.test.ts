@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { guessMerchant, normalizeDomain } from "./merchants";
-import type { Category } from "./schema";
+import { guessMerchant, merchantMap, normalizeDomain } from "./merchants";
+import { type Category, category } from "./schema";
 
 describe("normalizeDomain", () => {
 	test("strips www and subdomains", () => {
@@ -27,6 +27,31 @@ describe("normalizeDomain", () => {
 
 	test("treats each Shopify store as its own domain", () => {
 		expect(normalizeDomain("acme.myshopify.com")).toBe("acme.myshopify.com");
+	});
+});
+
+describe("merchantMap", () => {
+	test("covers about 100 merchants in every category", () => {
+		const entries = Object.entries(merchantMap);
+		expect(entries.length).toBeGreaterThanOrEqual(100);
+		const used = new Set(entries.map(([, c]) => c));
+		for (const c of category.options)
+			if (c !== "other") expect(used).toContain(c);
+	});
+
+	test("keys are already normalized domains", () => {
+		for (const domain of Object.keys(merchantMap))
+			expect(normalizeDomain(domain)).toBe(domain);
+	});
+
+	test("spot checks", () => {
+		expect(merchantMap["chick-fil-a.com"]).toBe("dining");
+		expect(merchantMap["hilton.com"]).toBe("travel");
+		expect(merchantMap["exxon.com"]).toBe("gas");
+		expect(merchantMap["disneyplus.com"]).toBe("streaming");
+		expect(merchantMap["publix.com"]).toBe("grocery");
+		expect(merchantMap["target.com"]).toBe("online_retail");
+		expect(merchantMap["walmart.com"]).toBe("online_retail");
 	});
 });
 
