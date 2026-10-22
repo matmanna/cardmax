@@ -115,7 +115,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 		<section>
 			<div className="merchant">
 				<span className="domain">
-					{merchant.domain}
+					<code>{merchant.domain}</code>
 					<span
 						className={`dot ${merchant.confidence}`}
 						title={`${merchant.confidence} confidence`}

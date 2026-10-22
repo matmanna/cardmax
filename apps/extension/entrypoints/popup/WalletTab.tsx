@@ -3,8 +3,8 @@ import { catalog, type WalletCard } from "@cardmax/core";
 import {
 	revokeAll,
 	type Settings,
-	setWallet,
 	updateSettings,
+	updateWallet,
 } from "@/lib/storage";
 
 type Props = {
@@ -17,10 +17,11 @@ export function WalletTab({ wallet, settings, onChange }: Props) {
 	const held = new Set(wallet.map((card) => card.cardId));
 
 	async function toggle(cardId: string) {
-		const next = held.has(cardId)
-			? wallet.filter((card) => card.cardId !== cardId)
-			: [...wallet, { cardId, addedAt: new Date().toISOString() }];
-		await setWallet(next);
+		await updateWallet((current) =>
+			current.some((card) => card.cardId === cardId)
+				? current.filter((card) => card.cardId !== cardId)
+				: [...current, { cardId, addedAt: new Date().toISOString() }],
+		);
 		onChange();
 	}
 

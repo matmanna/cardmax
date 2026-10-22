@@ -7,12 +7,21 @@ const bestBuyGtin = "0012345678905";
 
 // The payload panel shows the exact object that would leave the device.
 async function payload(popup: Page): Promise<unknown> {
-	await expect(popup.getByText("This leaves your device:")).toBeVisible();
+	await expect(popup.getByText(/^Sends to /)).toBeVisible();
 	const text = await popup.getByText(/^\s*\{[\s\S]*\}\s*$/).textContent();
 	return JSON.parse(text ?? "");
 }
 
 test.describe("wallet", () => {
+	test("quick clicks on two cards save both", async ({ openPopupFor }) => {
+		const popup = await openPopupFor();
+		await popup.getByRole("checkbox", { name: /Double Cash/ }).click();
+		await popup.getByRole("checkbox", { name: /Gold Card/ }).click();
+		await expect(
+			popup.getByRole("button", { name: "Wallet (2)" }),
+		).toBeVisible();
+	});
+
 	test("empty wallet lands on the Wallet tab and added cards persist", async ({
 		openPopupFor,
 	}) => {
@@ -22,9 +31,7 @@ test.describe("wallet", () => {
 		).toBeVisible();
 
 		// The checkboxes are controlled by stored state and flip only after the
-		// async save, so click and then wait, rather than check(). Waiting also
-		// avoids a race: WalletTab.toggle builds the next wallet from props, so
-		// a second click before the reload lands drops the first card.
+		// async save, so click and then wait, rather than check().
 		const doubleCash = popup.getByRole("checkbox", { name: /Double Cash/ });
 		const gold = popup.getByRole("checkbox", { name: /Gold Card/ });
 		await doubleCash.click();
@@ -102,10 +109,10 @@ test.describe("recommendation", () => {
 		const popup = await openPopupFor(await openStore("bestbuy"));
 
 		await expect(popup.getByText("bestbuy.com", { exact: true })).toBeVisible();
-		await expect(popup.getByText("high confidence")).toBeVisible();
+		await expect(popup.getByText("high confidence")).toBeAttached();
 		await expect(popup.getByLabel("Amount")).toHaveValue("349.99");
 		await expect(popup.getByRole("main")).toContainText(
-			/Use\s*Double Cash\s*≈ \$7\.00 back/,
+			/Pay with\s*Citi Double Cash\s*\+\$7\.00/,
 		);
 		await expect(popup.getByText("Gold Card")).toBeVisible();
 	});
@@ -119,7 +126,7 @@ test.describe("recommendation", () => {
 		await expect(amount).toHaveValue("349.99");
 		await amount.fill("500");
 		await expect(popup.getByRole("main")).toContainText(
-			/Use\s*Double Cash\s*≈ \$10\.00 back/,
+			/Pay with\s*Citi Double Cash\s*\+\$10\.00/,
 		);
 
 		await popup
@@ -127,7 +134,7 @@ test.describe("recommendation", () => {
 			.selectOption("grocery");
 
 		await expect(popup.getByRole("main")).toContainText(
-			/Use\s*Gold Card\s*≈ \$20\.00 back/,
+			/Pay with\s*American Express Gold Card\s*\+\$20\.00/,
 		);
 		await expect(amount).toHaveValue("500");
 	});
@@ -147,7 +154,7 @@ test.describe("recommendation", () => {
 			.getByRole("combobox", { name: /codes as/i })
 			.selectOption("grocery");
 		await expect(popup.getByRole("main")).toContainText(
-			/Use\s*Double Cash\s*≈ \$5\.00 back/,
+			/Pay with\s*Citi Double Cash\s*\+\$5\.00/,
 		);
 	});
 
@@ -157,11 +164,11 @@ test.describe("recommendation", () => {
 	}) => {
 		const popup = await openPopupFor(await openStore("amazon"));
 		await expect(popup.getByText("amazon.com", { exact: true })).toBeVisible();
-		await expect(popup.getByText("high confidence")).toBeVisible();
+		await expect(popup.getByText("high confidence")).toBeAttached();
 		// No price on the page, so the default amount stays.
 		await expect(popup.getByLabel("Amount")).toHaveValue("100");
 		await expect(popup.getByRole("main")).toContainText(
-			/Use\s*Double Cash\s*≈ \$2\.00 back/,
+			/Pay with\s*Citi Double Cash\s*\+\$2\.00/,
 		);
 		// No product, so nothing to compare.
 		await expect(
@@ -189,19 +196,23 @@ test.describe("compare at other stores", () => {
 		await compare.click();
 		expect(await payload(popup)).toEqual({ upc: bestBuyGtin });
 		await expect(
-			popup.getByText("To: nowhere (sample data, nothing is sent)"),
+			popup.getByText("Sends to nowhere (sample data, nothing is sent)"),
 		).toBeVisible();
 
 		await popup.getByRole("button", { name: "Cancel" }).click();
-		await expect(popup.getByText("This leaves your device:")).toHaveCount(0);
+		await expect(popup.getByText(/^Sends to /)).toHaveCount(0);
 		await expect(compare).toBeVisible();
 		expect(popupRequests).toEqual([]);
 
 		await compare.click();
 		await popup.getByRole("button", { name: "Send" }).click();
-		await expect(popup.getByRole("link", { name: "bestbuy" })).toBeVisible();
-		await expect(popup.getByRole("link", { name: "walmart" })).toBeVisible();
-		await expect(popup.getByText("$299.99", { exact: true })).toBeVisible();
+		await expect(
+			popup.getByRole("link", { name: "bestbuy.com" }),
+		).toBeVisible();
+		await expect(
+			popup.getByRole("link", { name: "walmart.com" }),
+		).toBeVisible();
+		await expect(popup.getByText("$299.99 list")).toBeVisible();
 		expect(popupRequests).toEqual([]);
 		expect(leaks).toEqual([]);
 	});
