@@ -1,0 +1,15 @@
+# Device side
+/apps/extension/ @matmanna
+/packages/core/ @matmanna
+
+# Cloud side
+/apps/web/ @cloudhoppr
+/packages/api/ @cloudhoppr
+/packages/auth/ @cloudhoppr
+/packages/db/ @cloudhoppr
+/packages/agent/ @cloudhoppr
+
+# Root config
+/package.json @cloudhoppr
+/turbo.json @cloudhoppr
+/biome.json @cloudhoppr

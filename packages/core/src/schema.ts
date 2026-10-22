@@ -57,3 +57,36 @@ export const recommendation = z.object({
 	reason: z.string(),
 });
 export type Recommendation = z.infer<typeof recommendation>;
+
+// The only product data that leaves the device, and only after the user clicks.
+// The extension shows this exact object in the payload panel before sending it.
+export const listingQuery = z
+	.object({
+		upc: z
+			.string()
+			.regex(/^\d{8,14}$/)
+			.optional(),
+		title: z.string().max(200).optional(),
+	})
+	.refine((q) => q.upc || q.title, "Send a UPC or a title");
+export type ListingQuery = z.infer<typeof listingQuery>;
+
+export const listing = z.object({
+	merchant: z.enum(["bestbuy", "walmart"]),
+	domain: z.string(),
+	title: z.string(),
+	priceUsd: z.number().nonnegative(),
+	url: z.url(),
+});
+export type Listing = z.infer<typeof listing>;
+
+// Messages the web app sends to the extension through externally_connectable.
+// Only the web app can start this exchange; the extension only replies.
+export const extensionMessage = z.discriminatedUnion("type", [
+	z.object({ type: z.literal("cardmax:getWallet") }),
+	z.object({
+		type: z.literal("cardmax:setWallet"),
+		wallet: z.array(walletCard),
+	}),
+]);
+export type ExtensionMessage = z.infer<typeof extensionMessage>;
