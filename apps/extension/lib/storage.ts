@@ -32,6 +32,19 @@ export async function setWallet(wallet: WalletCard[]): Promise<void> {
 	});
 }
 
+// Wallet edits run one at a time, so quick clicks never overwrite each other.
+let walletQueue: Promise<unknown> = Promise.resolve();
+
+export function updateWallet(
+	change: (wallet: WalletCard[]) => WalletCard[],
+): Promise<void> {
+	const run = walletQueue.then(async () =>
+		setWallet(change(await getWallet())),
+	);
+	walletQueue = run.catch(() => {});
+	return run;
+}
+
 export async function getSettings(): Promise<Settings> {
 	const { settings: stored } = await browser.storage.local.get("settings");
 	const parsed = settings.safeParse(stored);

@@ -30,8 +30,19 @@ function collect(): PageRaw {
 	return { jsonLd, meta, title: document.title };
 }
 
-export async function readActiveTab(): Promise<ActiveTab | null> {
+// E2E builds only: the tests open the popup in a tab, which makes the popup
+// itself the active tab, so they pass the store tab as ?tab=<id> instead.
+async function targetTab(): Promise<Browser.tabs.Tab | undefined> {
+	if (import.meta.env.WXT_E2E) {
+		const id = Number(new URLSearchParams(location.search).get("tab"));
+		if (Number.isInteger(id) && id > 0) return browser.tabs.get(id);
+	}
 	const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+	return tab;
+}
+
+export async function readActiveTab(): Promise<ActiveTab | null> {
+	const tab = await targetTab();
 	if (tab?.id === undefined || !tab.url) return null;
 	const url = new URL(tab.url);
 	if (url.protocol !== "http:" && url.protocol !== "https:") return null;

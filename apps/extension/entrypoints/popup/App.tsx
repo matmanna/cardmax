@@ -34,24 +34,23 @@ export default function App() {
 		<main>
 			<header>
 				<h1>Cardmax</h1>
-				<span className="badge">Runs on this device</span>
+				<nav>
+					<button
+						type="button"
+						aria-pressed={tab === "page"}
+						onClick={() => setTab("page")}
+					>
+						This page
+					</button>
+					<button
+						type="button"
+						aria-pressed={tab === "wallet"}
+						onClick={() => setTab("wallet")}
+					>
+						Wallet ({wallet.length})
+					</button>
+				</nav>
 			</header>
-			<nav>
-				<button
-					type="button"
-					aria-pressed={tab === "page"}
-					onClick={() => setTab("page")}
-				>
-					This page
-				</button>
-				<button
-					type="button"
-					aria-pressed={tab === "wallet"}
-					onClick={() => setTab("wallet")}
-				>
-					Wallet ({wallet.length})
-				</button>
-			</nav>
 			{tab === "page" ? (
 				<PageTab wallet={wallet} settings={settings} onChange={reload} />
 			) : (

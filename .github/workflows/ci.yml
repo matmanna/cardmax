@@ -29,3 +29,16 @@ jobs:
         with:
           name: cardmax-extension-chrome
           path: apps/extension/.output/chrome-mv3
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+        working-directory: apps/extension
+      - name: Extension e2e tests
+        run: bun run test:e2e
+        working-directory: apps/extension
+      - name: Upload e2e report and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: apps/extension/e2e/.results
+          retention-days: 7
