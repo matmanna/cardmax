@@ -7,6 +7,8 @@ Read these first:
 - `docs/WORK_SPLIT.md` covers ownership, merge rules, and the timeline.
 - `packages/core/src/schema.ts` is the shared contract. Import from `@cardmax/core` and do not edit it. Ask the human for changes.
 - `docs/research/02-photon-product-apis.md` covers the Photon and retailer API details.
+- The "What's new" section at the top of `docs/WORK_SPLIT.md` lists what's already built and what changed. Start there.
+- Design UI changes in the Paper file "Cardmax" first, then build them. The landing page and dashboard designs are on the artboard "Landing — product".
 
 ## You own
 
@@ -14,17 +16,21 @@ Read these first:
 
 ## Build, in order
 
-1. **Infrastructure.** Set up the Neon database with `DATABASE_URL` in `apps/web/.env`, run `bun run db:push`, confirm email and password sign-in works, and deploy (Vercel is fine). Add every new secret to the matching `.env.schema` file. Never commit `.env`.
-2. **Wallet sync.** Add a `wallet` table: one row per user, holding a `WalletCard[]` JSON value and an updated timestamp. Nothing else. Add protected oRPC procedures `wallet.get` and `wallet.put`, validated with `walletCard` from core. Require an explicit opt-in checkbox at sign-up that says the server can read the wallet (issuer and product only). Account deletion must delete the wallet row.
-3. **Sync page.** The web app talks to the extension with `chrome.runtime.sendMessage(EXTENSION_ID, message)` using `ExtensionMessage` from core. Only the web app can start this exchange. Build a page that pulls the wallet from the extension and pushes it to the server, and the reverse.
-4. **Listing search.** Add an oRPC procedure `listings.search` that takes a `ListingQuery` and returns `Listing[]`. Query Best Buy first (search by UPC, then by title). Add Walmart's affiliate API if approval arrives in time; otherwise ship Best Buy only. Keep the API keys server-side. Do not log or store queries. Allow CORS from the extension origin. Add basic rate limiting.
-5. **Text agent.** Build `packages/agent/` with the Photon Spectrum SDK (`spectrum-ts`) on the free tier.
+1. **Review PR #4.** It builds the landing page in `apps/web/src/components/landing/` and the `/` route. Review and merge it rather than rebuilding it. Reuse its tokens (`landing.css`) for any new page.
+2. **Infrastructure.** A Neon database already exists. Get `DATABASE_URL` from Matt, or claim your own, then run `bun run db:push`. Confirm email and password sign-in works, and deploy (Vercel is fine). Add every new secret to the matching `.env.schema` file. Never commit `.env`.
+3. **Wallet sync.** Add a `wallet` table: one row per user, holding a `WalletCard[]` JSON value and an updated timestamp. Nothing else. Add protected oRPC procedures `wallet.get` and `wallet.put`, validated with `walletCard` from core. Require an explicit opt-in checkbox at sign-up that says the server can read the wallet (card names only). Account deletion must delete the wallet row.
+4. **Sync page.** The web app talks to the extension with `chrome.runtime.sendMessage(EXTENSION_ID, message)` using `ExtensionMessage` from core. Only the web app can start this exchange. The extension already handles `cardmax:getWallet` and `cardmax:setWallet`, and allows the origin in `WXT_WEB_ORIGIN`.
+5. **Listing search.** Add an oRPC procedure `listings.search` that takes a `ListingQuery` and returns `Listing[]`. The extension calls it with oRPC's `RPCLink` at `${WXT_API_URL}/api/rpc` (see `apps/extension/lib/api.ts`). Query Best Buy first (search by UPC, then by title). Add Walmart's affiliate API if approval arrives in time; otherwise ship Best Buy only. Keep the API keys server-side. Do not log or store queries. Allow CORS from the `chrome-extension://` origin. Add basic rate limiting.
+6. **Dashboard at `/wallet`.** Match the dashboard tab of the Paper artboard: a sidebar (Wallet, Text agent, Privacy), the synced wallet table (card, earns, fee, terms checked), a text agent panel (linked number, last four digits only), and a "what our server holds" panel.
+7. **Text agent** in `packages/agent/`, behind the `Channel` adapter described in `docs/WORK_SPLIT.md`. Twilio SMS and MMS is the likely first channel, so Android teammates can test. Matt will confirm the channel and the setup steps.
    - Phone linking: the web app shows a one-time code, and the user texts it to the bot.
-   - The first reply says that Photon and carriers can read texts.
-   - For "which card for <merchant>", call `recommend()` from core with the user's synced wallet.
+   - The first reply says that the text provider and carriers can read texts.
+   - For "which card for <merchant>", call `guessMerchant()` and `recommend()` from core with the user's synced wallet.
+   - Verify the provider's request signature on every webhook.
    - Never ask for or store amounts or card digits. Keep no message log beyond the current request.
-   - Phrase replies as rewards math, never advice. Photon's terms ban automated financial advice.
-6. **Public pages.** Build a landing page and a "what leaves your device" transparency page. The transparency page lists every send: the `ListingQuery` contents, what the synced wallet holds, and what Photon can see.
+   - Phrase replies as rewards math, never advice.
+8. **Storefront photos.** When a text carries an image, download it with the provider's auth, strip EXIF metadata (GPS especially), and ask Claude Haiku 5.5 (`claude-haiku-5-5`) for `{ name, domain, confidence }` with structured output. Then run `guessMerchant()` and `recommend()`. Say which store you saw and how sure you are, and ask for the store name when you're unsure. Never write the image to disk, the database, or logs. Delete the media from the provider after replying. Details are in `docs/DECISIONS.md` under "Storefront photos".
+9. **`/privacy` transparency page.** List every send: the `ListingQuery` contents, what the synced wallet holds, what the text provider can see, and that photos go to Anthropic for one request.
 
 ## Constraints
 
@@ -35,4 +41,4 @@ Read these first:
 
 ## Done when
 
-All of these work on the deployed app: sign up with consent, sync the wallet from the extension, call `listings.search` from the extension, text the bot the link code, and get a card recommendation for a merchant by text.
+All of these work on the deployed app: sign up with consent, sync the wallet from the extension, call `listings.search` from the extension, see the wallet at `/wallet`, text the bot the link code, get a card recommendation by texting a store name, and get one by texting a storefront photo.
