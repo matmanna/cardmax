@@ -54,8 +54,11 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
 		] as const;
 	}, [getSnapshot, getServerSnapshot, selector, isEqual]);
 
-	const value = useSyncExternalStore(subscribe, getSelection, getServerSelection);
-	// biome-ignore lint/correctness/useExhaustiveDependencies: writes the ref after render, as the shim does
+	const value = useSyncExternalStore(
+		subscribe,
+		getSelection,
+		getServerSelection,
+	);
 	const _ = useMemo(() => {
 		inst.current.hasValue = true;
 		inst.current.value = value;

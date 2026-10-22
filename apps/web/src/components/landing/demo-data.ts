@@ -77,6 +77,35 @@ export function runDemo(store: DemoStore) {
 	};
 }
 
+// The stores the hero demo cycles through. Each runs the real engine.
+export const heroStores = [
+	{
+		label: "Best Buy",
+		domain: "bestbuy.com",
+		path: "/checkout",
+		amount: 1199.99,
+	},
+	{
+		label: "Whole Foods",
+		domain: "wholefoodsmarket.com",
+		path: "/cart",
+		amount: 86.4,
+	},
+	{
+		label: "DoorDash",
+		domain: "doordash.com",
+		path: "/checkout",
+		amount: 42.18,
+	},
+	{ label: "CVS", domain: "cvs.com", path: "/cart", amount: 31.75 },
+] as const;
+
+export function pickFor(domain: string, amountUsd: number) {
+	const merchant = guessMerchant(domain);
+	const [best, ...rest] = recommend(sampleWallet, catalog, merchant, amountUsd);
+	return { merchant, best, rest };
+}
+
 export function usd(value: number): string {
 	return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }

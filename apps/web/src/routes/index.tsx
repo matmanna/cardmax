@@ -1,22 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import {
+	Closing,
 	Footer,
 	Hero,
 	HowItWorks,
 	Nav,
-	PrivacyFaq,
-	Product,
+	Privacy,
 } from "@/components/landing/sections";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
 		meta: [
-			{ title: "Pointmaxx: know which card to use at every checkout" },
+			{ title: "Pointmaxx: the right card at every checkout" },
 			{
 				name: "description",
 				content:
-					"Pointmaxx looks at the store you're on and the cards you carry, then tells you which one earns the most. The math runs in your browser.",
+					"Pointmaxx picks the card that pays you most, wherever you shop.",
 			},
 		],
 	}),
@@ -29,9 +29,9 @@ function Landing() {
 			<Nav />
 			<main>
 				<Hero />
-				<Product />
 				<HowItWorks />
-				<PrivacyFaq />
+				<Privacy />
+				<Closing />
 			</main>
 			<Footer />
 		</div>
