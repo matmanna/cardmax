@@ -3,6 +3,7 @@ import type { Context as ApiContext } from "@cardmax/api/context";
 
 import { ENV } from "./env.server";
 import { auth, db } from "./services";
+import { identifyStorePromise } from "./vision.server";
 
 // Vercel sets x-real-ip and x-forwarded-for itself, so clients cannot spoof them there.
 function clientIp(headers: Headers): string | null {
@@ -38,6 +39,10 @@ export async function createContext({
 		clientKey: clientKey(req.headers),
 		listings: { bestBuyApiKey: ENV.BESTBUY_API_KEY || undefined },
 		agentSecret: ENV.BETTER_AUTH_SECRET,
+		agent: {
+			webUrl: ENV.BETTER_AUTH_URL,
+			identifyStore: await identifyStorePromise,
+		},
 	};
 }
 

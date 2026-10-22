@@ -23,11 +23,11 @@ export default defineConfig({
 			(import.meta.env.WXT_WEB_ORIGIN as string | undefined) ??
 			"http://localhost:3001";
 		return {
-			name: "Cardmax",
+			name: "Pointmaxx",
 			description: "Pick the best card for this merchant, on your device.",
 			// No host permissions by default. Per-site access is requested at runtime.
 			permissions: ["activeTab", "storage", "scripting"],
-			action: { default_title: "Cardmax" },
+			action: { default_title: "Pointmaxx" },
 			optional_host_permissions: ["https://*/*"],
 			...(e2e ? { host_permissions: e2eHosts } : {}),
 			// Only the web app can message the extension.

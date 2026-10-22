@@ -18,3 +18,10 @@ export function parseLinkCode(text: string): string | null {
 	const digits = text.replace(/[\s-]/g, "");
 	return /^\d{6}$/.test(digits) ? digits : null;
 }
+
+// Keyed hash of a phone number, used for lookups so the number is never stored.
+export function hashPhone(phone: string, secret: string): string {
+	return createHmac("sha256", secret)
+		.update(`phone:${phone}`)
+		.digest("base64url");
+}

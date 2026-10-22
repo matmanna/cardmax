@@ -6,6 +6,7 @@ import {
 	HeadContent,
 	Outlet,
 	Scripts,
+	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
@@ -30,14 +31,23 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "My App",
+				title: "Pointmaxx",
 			},
+			{ name: "theme-color", content: "#0A7A52" },
 		],
 		links: [
 			{
 				rel: "stylesheet",
 				href: appCss,
 			},
+			{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+			{
+				rel: "icon",
+				type: "image/png",
+				sizes: "32x32",
+				href: "/favicon-32.png",
+			},
+			{ rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
 		],
 	}),
 
@@ -45,16 +55,25 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
+	// The landing page brings its own light layout and nav.
+	const isLanding = useRouterState({
+		select: (state) => state.location.pathname === "/",
+	});
+
 	return (
-		<html lang="en" className="dark">
+		<html lang="en" className={isLanding ? undefined : "dark"}>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
-				<div className="grid h-svh grid-rows-[auto_1fr]">
-					<Header />
+				{isLanding ? (
 					<Outlet />
-				</div>
+				) : (
+					<div className="grid h-svh grid-rows-[auto_1fr]">
+						<Header />
+						<Outlet />
+					</div>
+				)}
 				<Toaster richColors />
 				<TanStackRouterDevtools position="bottom-left" />
 				<ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />

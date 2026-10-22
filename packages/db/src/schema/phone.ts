@@ -3,12 +3,14 @@ import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth";
 
-// The only phone data we keep: one verified number per user, removed on unlink or account deletion.
+// One verified number per user, removed on unlink or account deletion. The number itself
+// is never at rest: lookups use an HMAC, and replies go to the inbound sender.
 export const linkedPhone = pgTable("linked_phone", {
 	userId: text("user_id")
 		.primaryKey()
 		.references(() => user.id, { onDelete: "cascade" }),
-	phone: text("phone").notNull().unique(),
+	phoneHash: text("phone_hash").notNull().unique(),
+	last4: text("last4").notNull(),
 	linkedAt: timestamp("linked_at").defaultNow().notNull(),
 });
 

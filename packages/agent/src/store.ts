@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto";
 import type { Database } from "@cardmax/db";
 import { countHit } from "@cardmax/db/rate-limit";
 import { linkedPhone, phoneLinkCode } from "@cardmax/db/schema/phone";
@@ -6,9 +5,12 @@ import { wallet } from "@cardmax/db/schema/wallet";
 import { and, eq, gt } from "drizzle-orm";
 
 import type { AgentStore } from "./handle";
-import { hashLinkCode } from "./link-code";
+import { hashLinkCode, hashPhone } from "./link-code";
 
-const codeAttempts = { limit: 5, windowMs: 10 * 60 * 1000 };
+const codeWindowMs = 10 * 60 * 1000;
+const codeAttemptsPerPhone = 5;
+// Caps guessing from many numbers at once: 6 digits is a small space.
+const codeAttemptsGlobal = 200;
 
 export function createAgentStore(db: Database, secret: string): AgentStore {
 	return {
@@ -16,7 +18,7 @@ export function createAgentStore(db: Database, secret: string): AgentStore {
 			const [row] = await db
 				.select({ userId: linkedPhone.userId })
 				.from(linkedPhone)
-				.where(eq(linkedPhone.phone, phone));
+				.where(eq(linkedPhone.phoneHash, hashPhone(phone, secret)));
 			return row?.userId ?? null;
 		},
 
@@ -34,21 +36,27 @@ export function createAgentStore(db: Database, secret: string): AgentStore {
 		},
 
 		async linkPhone(userId, phone) {
+			const phoneHash = hashPhone(phone, secret);
+			const last4 = phone.slice(-4);
 			await db.transaction(async (tx) => {
 				// A number belongs to one account; relinking moves it.
-				await tx.delete(linkedPhone).where(eq(linkedPhone.phone, phone));
+				await tx
+					.delete(linkedPhone)
+					.where(eq(linkedPhone.phoneHash, phoneHash));
 				await tx
 					.insert(linkedPhone)
-					.values({ userId, phone })
+					.values({ userId, phoneHash, last4 })
 					.onConflictDoUpdate({
 						target: linkedPhone.userId,
-						set: { phone, linkedAt: new Date() },
+						set: { phoneHash, last4, linkedAt: new Date() },
 					});
 			});
 		},
 
 		async unlinkPhone(phone) {
-			await db.delete(linkedPhone).where(eq(linkedPhone.phone, phone));
+			await db
+				.delete(linkedPhone)
+				.where(eq(linkedPhone.phoneHash, hashPhone(phone, secret)));
 		},
 
 		async walletFor(userId) {
@@ -61,12 +69,10 @@ export function createAgentStore(db: Database, secret: string): AgentStore {
 
 		async allowCodeAttempt(phone) {
 			// Keyed by a hash so the rate-limit table never holds a phone number.
-			const key = createHmac("sha256", secret)
-				.update(`phone:${phone}`)
-				.digest("base64url")
-				.slice(0, 22);
-			const count = await countHit(db, `link:${key}`, codeAttempts.windowMs);
-			return count <= codeAttempts.limit;
+			const key = hashPhone(phone, secret).slice(0, 22);
+			const perPhone = await countHit(db, `link:${key}`, codeWindowMs);
+			const global = await countHit(db, "link:all", codeWindowMs);
+			return perPhone <= codeAttemptsPerPhone && global <= codeAttemptsGlobal;
 		},
 	};
 }

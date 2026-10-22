@@ -1,6 +1,7 @@
 import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
+import { agentRouter } from "./agent";
 import { catalogRouter } from "./catalog";
 import { deviceRouter } from "./device";
 import { listingsRouter } from "./listings";
@@ -19,6 +20,7 @@ export const appRouter = {
 	}),
 	wallet: walletRouter,
 	listings: listingsRouter,
+	agent: agentRouter,
 	catalog: catalogRouter,
 	device: deviceRouter,
 	phone: phoneRouter,

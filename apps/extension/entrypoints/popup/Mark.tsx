@@ -1,4 +1,4 @@
-// The Cardmax mark. Source of truth: docs/brand/mark.svg and the Paper "Brand" page.
+// The Pointmaxx mark. Source of truth: docs/brand/mark.svg and the Paper "Brand" page.
 export function Mark({ size = 20 }: { size?: number }) {
 	return (
 		<svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">

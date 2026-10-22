@@ -6,7 +6,7 @@ import {
 } from "@cardmax/core";
 import { z } from "zod";
 
-// Everything Cardmax keeps lives in chrome.storage.local on this device.
+// Everything Pointmaxx keeps lives in chrome.storage.local on this device.
 const settings = z.object({
 	sendsEnabled: z.boolean(),
 	centsPerPoint: z.number().positive(),
@@ -79,7 +79,7 @@ export async function setLink(value: Link | null): Promise<void> {
 	else await browser.storage.local.remove("link");
 }
 
-// Revoke: stop every send and delete everything Cardmax stored on this device.
+// Revoke: stop every send and delete everything Pointmaxx stored on this device.
 export async function revokeAll(): Promise<void> {
 	await browser.storage.local.clear();
 	await browser.storage.local.set({

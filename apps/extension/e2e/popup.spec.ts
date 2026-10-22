@@ -28,7 +28,7 @@ test.describe("wallet", () => {
 		).toBeVisible();
 	});
 
-	test("empty wallet lands on the Wallet tab and added cards persist", async ({
+	test("empty wallet on a non-store page lands on the Wallet tab and added cards persist", async ({
 		openPopupFor,
 	}) => {
 		const popup = await openPopupFor();
@@ -100,6 +100,66 @@ test.describe("wallet", () => {
 		await expect(
 			popup.getByRole("button", { name: "Compare at other stores" }),
 		).toHaveCount(0);
+	});
+});
+
+test.describe("starting tab", () => {
+	const pressed = (popup: Page, name: string | RegExp) =>
+		popup.getByRole("button", { name, pressed: true });
+
+	test("store page with an empty wallet starts on This page and points to Wallet", async ({
+		openPopupFor,
+		openStore,
+	}) => {
+		const popup = await openPopupFor(await openStore("bestbuy"));
+		await expect(pressed(popup, "This page")).toBeVisible();
+		await popup.getByRole("button", { name: "Add your cards" }).click();
+		await expect(pressed(popup, /^Wallet/)).toBeVisible();
+	});
+
+	test("store page with a wallet starts on This page", async ({
+		openPopupFor,
+		openStore,
+		seedWallet,
+	}) => {
+		await seedWallet(["citi-double-cash"]);
+		const popup = await openPopupFor(await openStore("bestbuy"));
+		await expect(pressed(popup, "This page")).toBeVisible();
+	});
+
+	test("a checkout page with an empty wallet starts on This page", async ({
+		openPopupFor,
+		openStore,
+	}) => {
+		const popup = await openPopupFor(await openStore("bestbuy", checkoutPath));
+		await expect(pressed(popup, "This page")).toBeVisible();
+	});
+
+	test("a non-store page with an empty wallet starts on Wallet", async ({
+		openPopupFor,
+	}) => {
+		const popup = await openPopupFor();
+		await expect(pressed(popup, /^Wallet/)).toBeVisible();
+	});
+
+	test("a wallet syncing in after open does not move the tab", async ({
+		openPopupFor,
+		openStore,
+		accountWallet,
+	}) => {
+		const popup = await openPopupFor(await openStore("bestbuy"));
+		await popup.getByRole("button", { name: /^Wallet/ }).click();
+		await expect(pressed(popup, /^Wallet/)).toBeVisible();
+
+		// A later reload (a card toggle) with a synced-in wallet keeps the tab.
+		accountWallet.cards = [
+			{ cardId: "amex-gold", addedAt: "2026-10-01T00:00:00Z" },
+		];
+		await popup.getByRole("checkbox", { name: /Double Cash/ }).click();
+		await expect(
+			popup.getByRole("checkbox", { name: /Double Cash/ }),
+		).toBeChecked();
+		await expect(pressed(popup, /^Wallet/)).toBeVisible();
 	});
 });
 

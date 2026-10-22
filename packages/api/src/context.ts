@@ -1,3 +1,4 @@
+import type { IdentifyStore } from "@cardmax/agent/vision";
 import type { Session } from "@cardmax/auth";
 import type { Database } from "@cardmax/db";
 
@@ -11,4 +12,7 @@ export type Context = {
 	listings: { bestBuyApiKey?: string };
 	// HMAC key for phone link codes (shared with the agent webhook).
 	agentSecret: string;
+	// The text agent's photo reader (absent without ANTHROPIC_API_KEY) and the
+	// site URL it points people to.
+	agent: { webUrl: string; identifyStore?: IdentifyStore };
 };

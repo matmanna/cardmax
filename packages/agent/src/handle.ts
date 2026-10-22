@@ -13,11 +13,15 @@ import {
 	emptyWalletReply,
 	linkedReply,
 	notLinkedReply,
+	photoPrefix,
+	photoUnclearReply,
 	recommendationReply,
 	tooManyTriesReply,
 	unknownMerchantReply,
 	unlinkedReply,
 } from "./replies";
+import { stripImageMetadata } from "./strip-metadata";
+import type { IdentifyStore, StoreGuess } from "./vision";
 
 // Storage the agent needs. The DB-backed version is in store.ts; tests use a fake.
 export type AgentStore = {
@@ -31,7 +35,18 @@ export type AgentStore = {
 	allowCodeAttempt(phone: string): Promise<boolean>;
 };
 
-export type AgentDeps = { store: AgentStore; webUrl: string };
+// Downloads a photo with the provider's auth. Returns raw bytes and the declared type.
+export type FetchImage = (
+	url: string,
+) => Promise<{ bytes: Uint8Array; type: string } | null>;
+
+export type AgentDeps = {
+	store: AgentStore;
+	webUrl: string;
+	// Both are needed for storefront photos; without them a photo gets "text the name".
+	fetchImage?: FetchImage;
+	identifyStore?: IdentifyStore;
+};
 
 // Recommendations assume $100 so replies read "about $2.00 per $100". We never ask for amounts.
 const perHundred = 100;
@@ -39,7 +54,7 @@ const perHundred = 100;
 // One inbound text in, one reply out. Nothing about the message is kept.
 export async function handleInbound(
 	inbound: Inbound,
-	{ store, webUrl }: AgentDeps,
+	{ store, webUrl, fetchImage, identifyStore }: AgentDeps,
 ): Promise<string> {
 	const text = inbound.text?.trim() ?? "";
 	const userId = await store.userForPhone(inbound.from);
@@ -60,7 +75,30 @@ export async function handleInbound(
 		return unlinkedReply;
 	}
 
-	const hostname = merchantFromText(text);
+	return answerFor(userId, inbound, {
+		store,
+		webUrl,
+		fetchImage,
+		identifyStore,
+	});
+}
+
+// The answer for a known user: a store name or a storefront photo in, the card
+// to use out. The web "Try it" panel calls this too, so it matches texting.
+export async function answerFor(
+	userId: string,
+	{ text: rawText, imageUrl }: Pick<Inbound, "text" | "imageUrl">,
+	{ store, webUrl, fetchImage, identifyStore }: AgentDeps,
+): Promise<string> {
+	const text = rawText?.trim() ?? "";
+	// A typed store name wins over a photo sent with it.
+	let hostname = merchantFromText(text);
+	let seen: StoreGuess | null = null;
+	if (!hostname && imageUrl) {
+		seen = await identifyPhoto(imageUrl, fetchImage, identifyStore);
+		if (!seen?.domain || !seen.name) return photoUnclearReply;
+		hostname = seen.domain;
+	}
 	if (!hostname) return unknownMerchantReply;
 
 	const wallet = await store.walletFor(userId);
@@ -68,5 +106,20 @@ export async function handleInbound(
 
 	const merchant = guessMerchant(hostname);
 	const ranked = recommend(wallet, catalog, merchant, perHundred);
-	return recommendationReply(merchant, ranked, catalog);
+	const reply = recommendationReply(merchant, ranked, catalog);
+	return seen ? `${photoPrefix(seen)}\n${reply}` : reply;
+}
+
+// Download, strip metadata, then identify. The bytes live only in this call.
+async function identifyPhoto(
+	url: string,
+	fetchImage: FetchImage | undefined,
+	identifyStore: IdentifyStore | undefined,
+): Promise<StoreGuess | null> {
+	if (!fetchImage || !identifyStore) return null;
+	const raw = await fetchImage(url).catch(() => null);
+	if (!raw) return null;
+	const clean = stripImageMetadata(raw.bytes, raw.type);
+	if (!clean) return null;
+	return identifyStore(clean).catch(() => null);
 }

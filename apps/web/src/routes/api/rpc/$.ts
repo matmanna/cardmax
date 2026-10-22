@@ -21,7 +21,7 @@ function logError(error: unknown) {
 	console.error(error);
 }
 
-// Only the Cardmax extension may call the API cross-origin, and never with cookies.
+// Only the Pointmaxx extension may call the API cross-origin, and never with cookies.
 const extensionOrigin = ENV.EXTENSION_ID
 	? `chrome-extension://${ENV.EXTENSION_ID}`
 	: null;

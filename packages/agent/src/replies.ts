@@ -7,11 +7,11 @@ export const privacyNotice =
 export const disclaimer = "Rewards math, not financial advice.";
 
 export function notLinkedReply(webUrl: string): string {
-	return `Hi, this is Cardmax. To link this number, open ${webUrl}/sync, get a 6-digit code, and text it here. ${privacyNotice}`;
+	return `Hi, this is Pointmaxx. To link this number, open ${webUrl}/sync, get a 6-digit code, and text it here. ${privacyNotice}`;
 }
 
 export const badCodeReply =
-	"That code is wrong or expired. Get a new one on the Cardmax website and text it here.";
+	"That code is wrong or expired. Get a new one on the Pointmaxx website and text it here.";
 
 export const tooManyTriesReply =
 	"Too many tries. Wait 10 minutes, then text a new code.";
@@ -21,13 +21,24 @@ export function linkedReply(): string {
 }
 
 export const unlinkedReply =
-	"Unlinked. This number is no longer connected to Cardmax.";
+	"Unlinked. This number is no longer connected to Pointmaxx.";
 
 export const unknownMerchantReply =
 	'I don\'t know that store yet. Text its website instead, like "costco.com".';
 
+export const photoUnclearReply =
+	"I couldn't tell which store that is from the photo. Text its name instead.";
+
+// "Looks like Target (medium confidence)." Asks for a correction unless confident.
+export function photoPrefix(seen: { name: string | null; confidence: string }) {
+	const prefix = `Looks like ${seen.name} (${seen.confidence} confidence).`;
+	return seen.confidence === "high"
+		? prefix
+		: `${prefix} Wrong store? Reply with its name.`;
+}
+
 export function emptyWalletReply(webUrl: string): string {
-	return `Your synced wallet is empty. Add cards in the Cardmax extension, then press "Save to account" at ${webUrl}/sync.`;
+	return `Your synced wallet is empty. Add cards in the Pointmaxx extension, then press "Save to account" at ${webUrl}/sync.`;
 }
 
 const categoryLabel: Record<MerchantGuess["category"], string> = {

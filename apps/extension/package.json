@@ -2,7 +2,7 @@
 	"name": "@cardmax/extension",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Cardmax browser extension",
+	"description": "Pointmaxx browser extension",
 	"type": "module",
 	"scripts": {
 		"dev": "wxt --port 5555",

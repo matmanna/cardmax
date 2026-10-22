@@ -1,4 +1,4 @@
-# Cardmax research 2: Photon, price APIs, UPC extraction (2026-10-22)
+# Pointmaxx research 2: Photon, price APIs, UPC extraction (2026-10-22)
 
 ## 1. Photon
 

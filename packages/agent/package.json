@@ -11,9 +11,11 @@
 		"test": "bun test"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^1.1.0",
 		"@cardmax/core": "workspace:*",
 		"@cardmax/db": "workspace:*",
 		"drizzle-orm": "catalog:",
+		"spectrum-ts": "^12.14.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
