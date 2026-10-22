@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+
+import { catalog, merchantMap } from "@cardmax/core";
 import {
 	type BrowserContext,
 	test as base,
@@ -59,10 +61,24 @@ export const mockListings = [
 	},
 ];
 
+// The public catalog the mocked API serves: the real one, with one card
+// renamed so a test can tell the pulled catalog from the bundled copy.
+export const pulledCardName = "Active Cash (from the API)";
+export const mockCatalog = {
+	cards: catalog.map((card) =>
+		card.id === "wells-fargo-active-cash" ? { ...card, name: pulledCardName } : card,
+	),
+	merchants: Object.entries(merchantMap).map(([domain, category]) => ({
+		domain,
+		category,
+	})),
+	updatedAt: "2026-10-22T00:00:00Z",
+};
+
 const cors = {
 	"access-control-allow-origin": "*",
 	"access-control-allow-methods": "POST, OPTIONS",
-	"access-control-allow-headers": "content-type",
+	"access-control-allow-headers": "content-type, x-cardmax-device",
 };
 
 type Fixtures = {
@@ -73,8 +89,12 @@ type Fixtures = {
 	leaks: string[];
 	// Requests made by popup pages to anything but the Cardmax API. Must stay empty.
 	popupRequests: string[];
-	// Bodies POSTed to the Cardmax API. Each test asserts exactly what it sent.
+	// Bodies POSTed to listings.search. Each test asserts exactly what it sent.
 	apiCalls: unknown[];
+	// Device wallet calls: path, the device token header, and the body.
+	deviceCalls: { path: string; token: string | null; body: unknown }[];
+	// What the mocked account holds; device.wallet.put replaces it.
+	accountWallet: { cards: unknown[] | null };
 	openStore: (store: Store, path?: string) => Promise<Page>;
 	openPopupFor: (page?: Page) => Promise<Page>;
 	seedWallet: (cardIds: string[]) => Promise<void>;
@@ -114,8 +134,20 @@ export const test = base.extend<Fixtures>({
 	apiCalls: async ({}, use) => {
 		await use([]);
 	},
+	// biome-ignore lint/correctness/noEmptyPattern: required by Playwright
+	deviceCalls: async ({}, use) => {
+		await use([]);
+	},
+	// biome-ignore lint/correctness/noEmptyPattern: required by Playwright
+	accountWallet: async ({}, use) => {
+		await use({ cards: null });
+	},
 
-	context: async ({ headless, leaks, apiCalls }, use, testInfo) => {
+	context: async (
+		{ headless, leaks, apiCalls, deviceCalls, accountWallet },
+		use,
+		testInfo,
+	) => {
 		const context = await chromium.launchPersistentContext("", {
 			// The full Chromium build; its new headless mode can load extensions.
 			channel: "chromium",
@@ -151,15 +183,34 @@ export const test = base.extend<Fixtures>({
 			if (request.method() === "OPTIONS") {
 				return route.fulfill({ status: 204, headers: cors });
 			}
-			if (request.url() !== listingsUrl || request.method() !== "POST") {
+			if (request.method() !== "POST") {
 				return route.fulfill({ status: 404, headers: cors });
 			}
-			apiCalls.push(request.postDataJSON());
-			return route.fulfill({
-				headers: cors,
-				contentType: "application/json",
-				body: JSON.stringify({ json: mockListings }),
-			});
+			const reply = (json: unknown) =>
+				route.fulfill({
+					headers: cors,
+					contentType: "application/json",
+					body: JSON.stringify({ json }),
+				});
+			const path = new URL(request.url()).pathname.replace("/api/rpc/", "");
+			if (path === "listings/search") {
+				apiCalls.push(request.postDataJSON());
+				return reply(mockListings);
+			}
+			if (path === "catalog/list") return reply(mockCatalog);
+			if (path.startsWith("device/")) {
+				const token = request.headers()["x-cardmax-device"] ?? null;
+				const body = request.postDataJSON()?.json;
+				deviceCalls.push({ path, token, body });
+				if (path === "device/wallet/put") accountWallet.cards = body;
+				if (path === "device/unlink") return reply({ ok: true });
+				return reply(
+					accountWallet.cards
+						? { cards: accountWallet.cards, updatedAt: "2026-10-22T00:00:00Z" }
+						: null,
+				);
+			}
+			return route.fulfill({ status: 404, headers: cors });
 		});
 		await context.route(`${webOrigin}/**`, (route) =>
 			route.fulfill({ contentType: "text/html", body: webAppHtml }),

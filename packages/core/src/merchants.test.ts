@@ -248,3 +248,12 @@ describe("supportedStoreOrigins", () => {
 		expect(supportedStoreOrigins).toContain("https://*.amazon.com/*");
 	});
 });
+
+describe("guessMerchant with a pulled store list", () => {
+	test("uses the given map instead of the bundled one", () => {
+		const guess = guessMerchant("www.newstore.com", undefined, {}, {
+			"newstore.com": "grocery",
+		});
+		expect(guess).toMatchObject({ category: "grocery", source: "curated" });
+	});
+});

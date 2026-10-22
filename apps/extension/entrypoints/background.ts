@@ -1,5 +1,4 @@
 import {
-	catalog,
 	extensionMessage,
 	guessMerchant,
 	type PageRaw,
@@ -8,8 +7,16 @@ import {
 	type WalletCard,
 } from "@cardmax/core";
 
+import { getCatalog, refreshCatalog } from "@/lib/catalog";
 import { collect, pageSignals } from "@/lib/page";
 import { getSettings, getWallet, setWallet } from "@/lib/storage";
+import {
+	connect,
+	disconnect,
+	isApplyingRemote,
+	pullFromAccount,
+	pushToAccount,
+} from "@/lib/sync";
 
 // Same fallback as externally_connectable in wxt.config.ts.
 const webOrigin =
@@ -37,6 +44,16 @@ async function handle(
 			await setWallet(parsed.data.wallet);
 			return { ok: true };
 		}
+		case "cardmax:connect": {
+			const { sendsEnabled } = await getSettings();
+			if (!sendsEnabled) return { error: "Sync is turned off on this device" };
+			await connect(parsed.data.token, parsed.data.email);
+			log("connected to", parsed.data.email);
+			return { ok: true };
+		}
+		case "cardmax:disconnect":
+			await disconnect();
+			return { ok: true };
 	}
 }
 
@@ -95,23 +112,36 @@ async function suggest(
 	stage: "cart" | "checkout",
 	raw: PageRaw,
 ): Promise<void> {
-	const [wallet, settings] = await Promise.all([getWallet(), getSettings()]);
+	const [wallet, settings, catalog] = await Promise.all([
+		getWallet(),
+		getSettings(),
+		getCatalog(),
+	]);
+	if (wallet.length === 0) {
+		// Nothing to suggest yet, so open the popup on its Wallet tab instead.
+		log("wallet is empty, opening the popup to add cards");
+		await browser.action.setBadgeText({ tabId, text: "+" });
+		await browser.action.setTitle({ tabId, title: "Add your cards to Cardmax" });
+		await openOncePerStage(tabId, windowId, stage);
+		return;
+	}
 	const merchant = guessMerchant(
 		new URL(url).hostname,
 		pageSignals(raw),
 		settings.overrides,
+		catalog.merchants,
 	);
 	const amount = parseProduct(raw)?.priceUsd ?? 100;
 	const [best] = recommend(
 		wallet,
-		catalog,
+		catalog.cards,
 		merchant,
 		amount,
 		settings.centsPerPoint,
 	);
-	const card = best && catalog.find((c) => c.id === best.cardId);
+	const card = best && catalog.cards.find((c) => c.id === best.cardId);
 	if (!best || !card) {
-		log("no card to suggest (is the wallet empty?)", wallet.length, "cards");
+		log("no card in the catalog matches the wallet");
 		await browser.action.setBadgeText({ tabId, text: "" });
 		return;
 	}
@@ -168,6 +198,30 @@ export default defineBackground(() => {
 			return true;
 		},
 	);
+
+	// Account sync and the public catalog, on start and whenever the popup asks.
+	const refresh = () =>
+		Promise.allSettled([refreshCatalog(), pullFromAccount()]).then((results) => {
+			for (const result of results) {
+				if (result.status === "rejected") log("sync failed:", String(result.reason));
+			}
+		});
+	refresh();
+
+	// The popup and nothing else may ask for a pull.
+	browser.runtime.onMessage.addListener((message, sender) => {
+		if (sender.id !== browser.runtime.id) return;
+		if ((message as { type?: string })?.type !== "cardmax:pull") return;
+		return refresh();
+	});
+
+	// Local wallet edits go up to the account when linked.
+	browser.storage.onChanged.addListener((changes, area) => {
+		if (area !== "local" || !changes.wallet || isApplyingRemote()) return;
+		getWallet()
+			.then(pushToAccount)
+			.catch((error) => log("push failed:", String(error)));
+	});
 
 	// A URL change (load or pushState) or a finished load on a granted site.
 	browser.tabs.onUpdated.addListener((_tabId, info, tab) => {

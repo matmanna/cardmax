@@ -283,6 +283,8 @@ export function guessMerchant(
 	hostname: string,
 	signals?: PageSignals,
 	overrides: Record<string, Category> = {},
+	// The extension passes the store list it pulled from the API; core's is the fallback.
+	curatedMap: Record<string, Category> = merchantMap,
 ): MerchantGuess {
 	const domain = normalizeDomain(hostname);
 
@@ -296,7 +298,7 @@ export function guessMerchant(
 		};
 	}
 
-	const curated = merchantMap[domain];
+	const curated = curatedMap[domain];
 	if (curated) {
 		return { domain, category: curated, confidence: "high", source: "curated" };
 	}
