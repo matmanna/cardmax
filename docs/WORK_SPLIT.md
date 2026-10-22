@@ -18,6 +18,24 @@ Two people. Each person owns separate directories, so the two of you rarely edit
 - **Text channel is now Twilio SMS and MMS** (@cloudhoppr is building it). It works on iPhone and Android. Start toll-free verification now, because it takes about three business days and a trial account can't send custom replies. Keep the agent behind the channel adapter (below).
 - **Platform screens for the demo flow** are designed in Paper, on the page "Platform": sign up, add cards, connect the extension, link a phone, the wallet dashboard, text agent settings, privacy and data, plan, and the storefront-photo text. Build them from those artboards.
 
+## Demo flow and screens
+
+Each step of the demo has a design in the Paper file "Cardmax", on the page **Platform**. Build each screen from its artboard.
+
+| #   | Step                                              | Artboard                           | Route or surface        | Owner                        |
+| --- | ------------------------------------------------- | ---------------------------------- | ----------------------- | ---------------------------- |
+| 1   | Land on the site and understand the product       | "Landing — product" (page 1)       | `/` (PR #4)             | B reviews                    |
+| 2   | Create an account, with the wallet-sync consent   | 01 Sign up                         | `/signup`               | B                            |
+| 3   | Pick your cards                                   | 02 Onboarding · Add cards          | `/onboarding/cards`     | B                            |
+| 4   | Install the extension and sync                    | 03 Onboarding · Connect extension  | `/onboarding/extension` | B (page), A (extension side) |
+| 5   | Text the link code to Twilio                      | 04 Onboarding · Link phone         | `/onboarding/phone`     | B                            |
+| 6   | Shop: the popup picks a card, then compare prices | "Landing — product", popup states  | Extension popup         | A                            |
+| 7   | Text a store name or a storefront photo           | 09 SMS · Link and storefront photo | Twilio webhook          | B                            |
+| 8   | Manage cards and the point value                  | 05 Wallet                          | `/wallet`               | B                            |
+| 9   | Text agent settings and unlink                    | 06 Text agent                      | `/texts`                | B                            |
+| 10  | See what's stored, export, delete                 | 07 Privacy and data                | `/privacy`              | B                            |
+| 11  | Plan (free during beta)                           | 08 Plan                            | `/plan`                 | B                            |
+
 ## Ownership
 
 | Area                                                            | Owner                             | Paths                                                                                          |
