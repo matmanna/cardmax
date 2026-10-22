@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { Flow } from "./flow";
+import { Mark } from "./mark";
 import { BrowserFrame, Dashboard, Phone, Popup, StorePage } from "./mocks";
 
 const INSTALL_URL = "#install";
@@ -11,7 +12,7 @@ export function Nav() {
 	return (
 		<header className="lp-nav">
 			<span className="lp-wordmark">
-				<span className="lp-mark">C</span>
+				<Mark />
 				Cardmax
 			</span>
 			<nav>
@@ -216,7 +217,10 @@ export function Footer() {
 				</a>
 			</div>
 			<div className="lp-footer-bar">
-				<span>Cardmax</span>
+				<span className="lp-wordmark lp-wordmark-small">
+					<Mark size={16} />
+					Cardmax
+				</span>
 				<nav>
 					<a href="#privacy">Privacy</a>
 					<a href={GITHUB_URL}>GitHub</a>

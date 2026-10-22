@@ -11,6 +11,7 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 
 import { cardLabel, demoStores, runDemo, sampleWallet, usd } from "./demo-data";
+import { Mark } from "./mark";
 import { useInView, usePrefersReducedMotion } from "./motion";
 
 /* Browser window ---------------------------------------------------------- */
@@ -49,7 +50,7 @@ export function BrowserFrame({
 				</span>
 				<Puzzle size={16} aria-hidden />
 				<span className="mk-ext-icon" data-open={extensionOpen || undefined}>
-					C
+					<Mark size={20} />
 				</span>
 			</div>
 			<div className="mk-viewport">{children}</div>
@@ -108,7 +109,10 @@ export function Popup({ state }: { state: PopupState }) {
 	return (
 		<div className="mk-popup">
 			<div className="mk-popup-head">
-				<strong>Cardmax</strong>
+				<strong>
+					<Mark size={18} />
+					Cardmax
+				</strong>
 				<span className="mk-seg">
 					<span data-on={state !== "wallet" || undefined}>This page</span>
 					<span data-on={state === "wallet" || undefined}>
@@ -236,7 +240,9 @@ export function Phone() {
 		<div ref={ref} className="mk-phone-wrap">
 			<div className="mk-phone">
 				<div className="mk-phone-head">
-					<span className="mk-avatar">C</span>
+					<span className="mk-avatar">
+						<Mark size={36} />
+					</span>
 					<strong>Cardmax</strong>
 					<small>iMessage</small>
 				</div>
@@ -255,11 +261,8 @@ export function Phone() {
 						</p>
 					))}
 					{typing && (
-						<p
-							className="mk-bubble mk-typing"
-							data-from="bot"
-							aria-label="Typing"
-						>
+						<p className="mk-bubble mk-typing" data-from="bot">
+							<span className="lp-sr-only">Typing</span>
 							<i />
 							<i />
 							<i />
