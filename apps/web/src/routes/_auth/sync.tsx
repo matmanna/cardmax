@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { ENV } from "@/env";
+import { authClient } from "@/lib/auth-client";
 import { type ExtensionReply, sendToExtension } from "@/lib/extension";
 import { orpc } from "@/utils/orpc";
 
@@ -89,6 +90,28 @@ function RouteComponent() {
 	}
 
 	const accountCards = account.data?.cards ?? [];
+	const { data: session } = authClient.useSession();
+
+	// Hands the extension a device token so it syncs by itself from now on.
+	const connect = useMutation(
+		orpc.device.link.mutationOptions({
+			onSuccess: async ({ token }) => {
+				const reply = await sendToExtension(ENV.EXTENSION_ID, {
+					type: "cardmax:connect",
+					token,
+					email: session?.user.email ?? "",
+				});
+				if ("error" in reply) {
+					toast.error(reply.error);
+					return;
+				}
+				toast.success("Connected. The extension now syncs by itself.");
+				readDevice();
+				invalidateAccount();
+			},
+			onError: (error) => toast.error(error.message),
+		}),
+	);
 
 	return (
 		<div className="mx-auto w-full max-w-3xl space-y-6 p-6">
@@ -99,6 +122,23 @@ function RouteComponent() {
 					account. No card numbers, purchases, or browsing.
 				</p>
 			</div>
+
+			<section className="flex flex-wrap items-center justify-between gap-3 border p-4">
+				<div>
+					<h2 className="font-semibold">Connect the extension</h2>
+					<p className="text-muted-foreground text-sm">
+						After this, changes in the extension save to your account and your
+						account fills the extension. Disconnect any time from the popup.
+					</p>
+				</div>
+				<Button
+					type="button"
+					disabled={connect.isPending || device.status !== "ready"}
+					onClick={() => connect.mutate({})}
+				>
+					Connect and sync automatically
+				</Button>
+			</section>
 
 			<div className="grid gap-4 md:grid-cols-2">
 				<section className="space-y-3 border p-4">
