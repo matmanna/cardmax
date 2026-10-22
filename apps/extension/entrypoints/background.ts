@@ -61,7 +61,7 @@ async function handle(
 
 // Local only: shows in the service worker console under chrome://extensions.
 function log(...parts: unknown[]) {
-	console.info("[cardmax]", ...parts);
+	console.info("[pointmaxx]", ...parts);
 }
 
 // Which checkout stage a URL is at, if any. Amazon's checkout lives under /gp/buy/.
@@ -128,7 +128,7 @@ async function suggest(
 		await browser.action.setBadgeText({ tabId, text: "+" });
 		await browser.action.setTitle({
 			tabId,
-			title: "Add your cards to Cardmax",
+			title: "Add your cards to Pointmaxx",
 		});
 		await openOncePerStage(tabId, windowId, stage);
 		return;

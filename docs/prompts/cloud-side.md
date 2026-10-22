@@ -1,6 +1,6 @@
 # Agent prompt: cloud side (@cloudhoppr)
 
-You are building the cloud side of Cardmax, a privacy-first credit card optimizer, for a four-hour hackathon on the personal agents and data privacy track. A teammate's agent is building the browser extension and the recommendation engine in parallel.
+You are building the cloud side of Pointmaxx, a privacy-first credit card optimizer, for a four-hour hackathon on the personal agents and data privacy track. A teammate's agent is building the browser extension and the recommendation engine in parallel.
 
 Read these first:
 - `docs/DECISIONS.md` covers the product, privacy rules, and what is cut.

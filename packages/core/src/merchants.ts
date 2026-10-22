@@ -340,7 +340,7 @@ export function guessMerchant(
 	};
 }
 
-// Stores Cardmax knows well enough to open by itself at checkout. One Chrome
+// Stores Pointmaxx knows well enough to open by itself at checkout. One Chrome
 // prompt grants all of them; "*." also matches the bare domain.
 export const supportedStoreDomains = Object.keys(merchantMap);
 

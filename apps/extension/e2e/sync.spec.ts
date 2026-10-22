@@ -114,7 +114,7 @@ test("an auto-opened popup shows the checkout the background read", async ({
 	serviceWorker,
 }) => {
 	await seedWallet(["citi-double-cash"]);
-	// A tab Cardmax can't read or even see the URL of, like an auto-opened
+	// A tab Pointmaxx can't read or even see the URL of, like an auto-opened
 	// popup's tab without an activeTab grant.
 	const page = await context.newPage();
 	await page.goto(`${webOrigin}/`);

@@ -52,7 +52,7 @@ export default function App() {
 			<header>
 				<h1>
 					<Mark />
-					Cardmax
+					Pointmaxx
 				</h1>
 				<nav>
 					<button

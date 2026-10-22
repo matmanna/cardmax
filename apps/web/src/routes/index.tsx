@@ -12,11 +12,11 @@ import {
 export const Route = createFileRoute("/")({
 	head: () => ({
 		meta: [
-			{ title: "Cardmax: know which card to use at every checkout" },
+			{ title: "Pointmaxx: know which card to use at every checkout" },
 			{
 				name: "description",
 				content:
-					"Cardmax looks at the store you're on and the cards you carry, then tells you which one earns the most. The math runs in your browser.",
+					"Pointmaxx looks at the store you're on and the cards you carry, then tells you which one earns the most. The math runs in your browser.",
 			},
 		],
 	}),
