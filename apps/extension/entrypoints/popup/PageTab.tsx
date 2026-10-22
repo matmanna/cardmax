@@ -31,7 +31,9 @@ type Lookup =
 	| { state: "done"; results: RankedListing[] }
 	| { state: "error"; message: string };
 
-const cardName = new Map(catalog.map((card) => [card.id, card.name]));
+const cardName = new Map(
+	catalog.map((card) => [card.id, `${card.issuer} ${card.name}`]),
+);
 
 function usd(value: number) {
 	return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -61,7 +63,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 	if (!merchant) {
 		return (
 			<section>
-				<p className="muted">Open a store page to get a card suggestion.</p>
+				<p className="empty">Open a store page to get a card suggestion.</p>
 			</section>
 		);
 	}
@@ -103,17 +105,25 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 		}
 	}
 
+	const hasPoints = catalog.some(
+		(card) =>
+			card.rewardCurrency === "points" &&
+			wallet.some((held) => held.cardId === card.id),
+	);
+
 	return (
 		<section>
 			<div className="merchant">
-				<div>
-					<strong>{merchant.domain}</strong>
-					<span className={`chip ${merchant.confidence}`}>
-						{merchant.confidence} confidence
-					</span>
-				</div>
-				<label>
-					Codes as
+				<span className="domain">
+					{merchant.domain}
+					<span
+						className={`dot ${merchant.confidence}`}
+						title={`${merchant.confidence} confidence`}
+					/>
+					<span className="sr-only">{merchant.confidence} confidence</span>
+				</span>
+				<label className="category">
+					<span className="sr-only">Codes as</span>
 					<select
 						value={merchant.category}
 						onChange={(event) => override(event.target.value as Category)}
@@ -127,50 +137,54 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 				</label>
 			</div>
 
-			<label className="amount">
-				Amount
-				<input
-					type="number"
-					min={0}
-					step="0.01"
-					value={amount}
-					onChange={(event) => setAmount(Number(event.target.value) || 0)}
-				/>
-			</label>
-
 			{best ? (
 				<>
-					<div className="best">
-						<span className="muted">Use</span>
-						<strong>{cardName.get(best.cardId)}</strong>
-						<span className="reward">
-							≈ {usd(best.estimatedRewardUsd)} back
-						</span>
-						<small>{best.reason}</small>
+					<div className="winner">
+						<span className="label">Pay with</span>
+						<h2>{cardName.get(best.cardId)}</h2>
+						<div className="reward">
+							<strong>+{usd(best.estimatedRewardUsd)}</strong>
+							<span>
+								{best.reason} on{" "}
+								<label className="amount">
+									<span className="sr-only">Amount</span>$
+									<input
+										type="number"
+										min={0}
+										step="0.01"
+										value={amount}
+										onChange={(event) =>
+											setAmount(Number(event.target.value) || 0)
+										}
+									/>
+								</label>
+							</span>
+						</div>
 					</div>
-					<ol className="rest">
+					<ol className="rows">
 						{rest.map((rec) => (
 							<li key={rec.cardId}>
 								<span>{cardName.get(rec.cardId)}</span>
-								<span>{usd(rec.estimatedRewardUsd)}</span>
+								<span>+{usd(rec.estimatedRewardUsd)}</span>
 							</li>
 						))}
 					</ol>
-					<small className="muted">
-						Points valued at {settings.centsPerPoint}¢ each.
-					</small>
+					{hasPoints && (
+						<p className="note">Points valued at {settings.centsPerPoint}¢.</p>
+					)}
 				</>
 			) : (
-				<p className="muted">Add cards in the Wallet tab.</p>
+				<p className="empty">Add cards in the Wallet tab.</p>
 			)}
 
 			{product && (
-				<div className="lookup">
-					<strong>{product.title}</strong>
+				<div className="compare">
+					<p className="product">{product.title}</p>
 					{lookup.state === "idle" &&
 						(settings.sendsEnabled ? (
 							<button
 								type="button"
+								className="secondary"
 								onClick={() =>
 									setLookup({
 										state: "confirm",
@@ -181,13 +195,12 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 								Compare at other stores
 							</button>
 						) : (
-							<small className="muted">Sends are off.</small>
+							<p className="note">Sends are off.</p>
 						))}
 					{lookup.state === "confirm" && (
 						<div className="payload">
-							<span>This leaves your device:</span>
-							<pre>{JSON.stringify(lookup.query, null, 2)}</pre>
-							<small>To: {listingsEndpoint}</small>
+							<span className="label">Sends to {listingsEndpoint}</span>
+							<pre>{JSON.stringify(lookup.query)}</pre>
 							<div className="actions">
 								<button type="button" onClick={() => send(lookup.query)}>
 									Send
@@ -202,20 +215,24 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 							</div>
 						</div>
 					)}
-					{lookup.state === "sending" && <small>Looking up…</small>}
+					{lookup.state === "sending" && <p className="note">Looking up…</p>}
 					{lookup.state === "error" && (
-						<small className="error">{lookup.message}</small>
+						<p className="note error">{lookup.message}</p>
 					)}
 					{lookup.state === "done" && (
-						<ol className="listings">
+						<ol className="rows listings">
 							{lookup.results.map(({ listing, best: card, netPriceUsd }) => (
 								<li key={listing.url}>
-									<a href={listing.url} target="_blank" rel="noreferrer">
-										{listing.merchant}
-									</a>
-									<span>{usd(listing.priceUsd)}</span>
-									<strong>{usd(netPriceUsd)} net</strong>
-									{card && <small>with {cardName.get(card.cardId)}</small>}
+									<span>
+										<a href={listing.url} target="_blank" rel="noreferrer">
+											{listing.domain.replace(/^www\./, "")}
+										</a>
+										{card && <small>with {cardName.get(card.cardId)}</small>}
+									</span>
+									<span className="price">
+										<strong>{usd(netPriceUsd)}</strong>
+										<small>{usd(listing.priceUsd)} list</small>
+									</span>
 								</li>
 							))}
 						</ol>

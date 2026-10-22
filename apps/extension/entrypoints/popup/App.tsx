@@ -34,9 +34,7 @@ export default function App() {
 		<main>
 			<header>
 				<h1>Cardmax</h1>
-				<span className="badge">Runs on this device</span>
-			</header>
-			<nav>
+				<nav>
 				<button
 					type="button"
 					aria-pressed={tab === "page"}
@@ -51,7 +49,8 @@ export default function App() {
 				>
 					Wallet ({wallet.length})
 				</button>
-			</nav>
+				</nav>
+			</header>
 			{tab === "page" ? (
 				<PageTab wallet={wallet} settings={settings} onChange={reload} />
 			) : (

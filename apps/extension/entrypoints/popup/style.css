@@ -1,14 +1,353 @@
-/* Placeholder styles. Replaced with the Paper design tokens. */
+/* Tokens match the "Popup — this page" artboard in the Cardmax Paper file. */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource/instrument-serif";
+
+:root {
+	--background: #ffffff;
+	--foreground: #0b1b2b;
+	--surface: #f4f6f8;
+	--border: #e3e8ef;
+	--muted: #5b6b7c;
+	--primary: #0a7a52;
+	--danger: #b4232a;
+	--warning: #b7791f;
+	--sans: "Geist Variable", system-ui, sans-serif;
+	--serif: "Instrument Serif", Georgia, serif;
+	--mono: "Geist Mono Variable", ui-monospace, monospace;
+}
+
+* {
+	box-sizing: border-box;
+}
+
 body {
 	margin: 0;
 	width: 360px;
-	font:
-		14px / 1.4 system-ui,
-		sans-serif;
+	background: var(--background);
+	color: var(--foreground);
+	font: 14px/18px var(--sans);
+	-webkit-font-smoothing: antialiased;
 }
-main {
-	padding: 12px;
-}
+
+h1,
+h2,
+p,
+ol,
+ul,
 pre {
+	margin: 0;
+	padding: 0;
+}
+
+ol,
+ul {
+	list-style: none;
+}
+
+a {
+	color: inherit;
+}
+
+button {
+	font: 500 14px/18px var(--sans);
+	padding: 10px 14px;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	background: var(--primary);
+	color: #ffffff;
+	cursor: pointer;
+}
+
+button.secondary {
+	background: var(--background);
+	border-color: var(--border);
+	color: var(--foreground);
+}
+
+button.danger {
+	background: none;
+	border-color: var(--border);
+	color: var(--danger);
+	width: 100%;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+	outline: 2px solid var(--primary);
+	outline-offset: 2px;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+/* Header */
+
+header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--border);
+}
+
+h1 {
+	font: 400 24px/28px var(--serif);
+	letter-spacing: -0.01em;
+}
+
+nav {
+	display: flex;
+	gap: 4px;
+}
+
+nav button {
+	font-size: 13px;
+	line-height: 16px;
+	padding: 6px 10px;
+	background: none;
+	color: var(--muted);
+}
+
+nav button[aria-pressed="true"] {
+	background: var(--foreground);
+	color: #ffffff;
+}
+
+/* Shared text */
+
+.label,
+.note,
+.intro,
+.empty {
+	font-size: 13px;
+	line-height: 16px;
+	color: var(--muted);
+}
+
+.empty,
+.intro {
+	padding: 20px;
+}
+
+.note {
+	padding: 12px 20px 0;
+}
+
+.note.error {
+	color: var(--danger);
+}
+
+/* Merchant */
+
+.merchant {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 20px;
+}
+
+.domain {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font: 13px/16px var(--mono);
+}
+
+.dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--muted);
+}
+
+.dot.high {
+	background: var(--primary);
+}
+
+.dot.medium {
+	background: var(--warning);
+}
+
+.category select {
+	font: 13px/16px var(--sans);
+	color: var(--muted);
+	border: none;
+	background: none;
+	text-align: right;
+	cursor: pointer;
+}
+
+/* Winner */
+
+.winner {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 20px 20px;
+}
+
+.winner h2 {
+	font: 400 34px/36px var(--serif);
+	letter-spacing: -0.015em;
+}
+
+.reward {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	padding-top: 6px;
+}
+
+.reward strong {
+	font-size: 22px;
+	line-height: 28px;
+	font-weight: 600;
+	color: var(--primary);
+}
+
+.reward span {
+	font-size: 13px;
+	line-height: 16px;
+	color: var(--muted);
+}
+
+.amount input {
+	width: 80px;
+	font: inherit;
+	color: var(--foreground);
+	border: none;
+	border-bottom: 1px dashed var(--border);
+	padding: 0 0 1px;
+	background: none;
+	-moz-appearance: textfield;
+}
+
+.amount input::-webkit-inner-spin-button,
+.amount input::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+}
+
+/* Rows */
+
+.rows {
+	padding: 0 20px;
+}
+
+.rows li {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid var(--border);
+	color: var(--muted);
+}
+
+.rows li:last-child {
+	border-bottom: 1px solid var(--border);
+}
+
+.rows small {
+	display: block;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--muted);
+}
+
+/* Compare */
+
+.compare {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 20px 0;
+}
+
+.compare > .product,
+.compare > button {
+	margin: 0 20px;
+}
+
+.payload {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 0 20px;
+	padding: 14px;
+	background: var(--surface);
+	border-radius: 12px;
+}
+
+.payload .label {
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.payload pre {
+	font: 13px/20px var(--mono);
 	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.actions {
+	display: flex;
+	gap: 8px;
+}
+
+.actions button {
+	flex: 1;
+}
+
+.listings li {
+	color: var(--foreground);
+}
+
+.listings .price {
+	text-align: right;
+}
+
+/* Wallet */
+
+.cards li {
+	padding: 0;
+}
+
+.cards label {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	width: 100%;
+	padding: 12px 0;
+	cursor: pointer;
+}
+
+.cards input {
+	margin: 2px 0 0;
+	accent-color: var(--primary);
+}
+
+.cards strong {
+	display: block;
+	font-weight: 500;
+	color: var(--foreground);
+}
+
+.danger-zone {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 20px;
+}
+
+.danger-zone .note {
+	padding: 0;
 }
