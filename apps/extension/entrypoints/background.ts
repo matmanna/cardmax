@@ -42,6 +42,11 @@ async function handle(
 
 /* Automatic suggestions on sites the user turned on ----------------------- */
 
+// Local only: shows in the service worker console under chrome://extensions.
+function log(...parts: unknown[]) {
+	console.info("[cardmax]", ...parts);
+}
+
 // Which checkout stage a URL is at, if any. Amazon's checkout lives under /gp/buy/.
 function checkoutStage(url: string): "cart" | "checkout" | null {
 	const { pathname } = new URL(url);
@@ -54,21 +59,31 @@ function checkoutStage(url: string): "cart" | "checkout" | null {
 // cart to checkout with pushState). Chrome only reports URLs for sites the
 // user granted, so nothing else is visible here.
 async function onTabUrl(tab: Browser.tabs.Tab): Promise<void> {
-	if (tab.id === undefined || !tab.url?.startsWith("https:")) return;
+	if (tab.id === undefined) return;
+	if (!tab.url) {
+		log("tab updated, but the browser hid its URL (site not granted)");
+		return;
+	}
+	if (!tab.url.startsWith("https:")) return;
 	const stage = checkoutStage(tab.url);
+	log("url", tab.url, "stage", stage);
 	if (!stage) {
 		await browser.action.setBadgeText({ tabId: tab.id, text: "" });
 		return;
 	}
 	const origin = new URL(tab.url).origin;
 	if (!(await browser.permissions.contains({ origins: [`${origin}/*`] }))) {
+		log("no site access for", origin, "(turn the switch on in the popup)");
 		return;
 	}
 	const [result] = await browser.scripting.executeScript({
 		target: { tabId: tab.id },
 		func: collect,
 	});
-	if (!result?.result) return;
+	if (!result?.result) {
+		log("could not read the page");
+		return;
+	}
 	await suggest(tab.id, tab.windowId, tab.url, stage, result.result);
 }
 
@@ -96,9 +111,11 @@ async function suggest(
 	);
 	const card = best && catalog.find((c) => c.id === best.cardId);
 	if (!best || !card) {
+		log("no card to suggest (is the wallet empty?)", wallet.length, "cards");
 		await browser.action.setBadgeText({ tabId, text: "" });
 		return;
 	}
+	log("suggest", card.name, best.reason, "for", merchant);
 
 	const unit = card.rewardCurrency === "cash" ? "%" : "x";
 	await browser.action.setBadgeBackgroundColor({ tabId, color: "#0B1B2B" });
@@ -122,16 +139,26 @@ async function openOncePerStage(
 ) {
 	const key = `opened:${tabId}:${stage}`;
 	const seen = await browser.storage.session.get(key);
-	if (seen[key]) return;
+	if (seen[key]) {
+		log("popup already opened at", stage, "in this tab");
+		return;
+	}
 	await browser.storage.session.set({ [key]: true });
 	try {
 		await browser.action.openPopup({ windowId });
-	} catch {
+		log("opened popup at", stage);
+	} catch (error) {
 		// Not focused, or the browser doesn't allow it. The badge is enough.
+		log("openPopup failed:", String(error));
 	}
 }
 
 export default defineBackground(() => {
+	log("background started", browser.runtime.getManifest().version);
+	browser.permissions
+		.getAll()
+		.then(({ origins }) => log("granted sites", origins ?? []));
+
 	browser.runtime.onMessageExternal.addListener(
 		(message, sender, sendResponse) => {
 			handle(message, sender)
@@ -145,7 +172,7 @@ export default defineBackground(() => {
 	// A URL change (load or pushState) or a finished load on a granted site.
 	browser.tabs.onUpdated.addListener((_tabId, info, tab) => {
 		if (!info.url && info.status !== "complete") return;
-		onTabUrl(tab).catch(() => {});
+		onTabUrl(tab).catch((error) => log("error", String(error)));
 	});
 
 	browser.tabs.onRemoved.addListener((tabId) => {
