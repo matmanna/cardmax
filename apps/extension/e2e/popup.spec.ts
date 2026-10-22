@@ -293,3 +293,41 @@ async function badgeFor(serviceWorker: Worker, url: string): Promise<string> {
 		return chrome.action.getBadgeText({ tabId: tab.id });
 	}, url);
 }
+
+test.describe("auto-open at checkout", () => {
+	test.beforeEach(async ({ seedWallet }) => {
+		await seedWallet(["citi-double-cash", "amex-gold"]);
+	});
+
+	// Playwright can't see a toolbar popup as a page, so this checks the
+	// background's once-per-tab record. openPopup itself was verified by hand.
+	test("checkout marks the tab as opened, and a product page does not", async ({
+		openStore,
+		serviceWorker,
+	}) => {
+		const product = await openStore("bestbuy");
+		await product.waitForLoadState("load");
+		const checkout = await openStore("bestbuy", checkoutPath);
+		await expect
+			.poll(() => openedFlag(serviceWorker, checkout.url()))
+			.toBe(true);
+		expect(await openedFlag(serviceWorker, product.url())).toBe(false);
+	});
+});
+
+async function openedFlag(serviceWorker: Worker, url: string) {
+	return serviceWorker.evaluate(async (tabUrl) => {
+		const { chrome } = globalThis as unknown as SwGlobal & {
+			chrome: {
+				storage: {
+					session: { get(key: string): Promise<Record<string, unknown>> };
+				};
+			};
+		};
+		const tabs = await chrome.tabs.query({});
+		const tab = tabs.find((t) => t.url === tabUrl);
+		if (tab?.id === undefined) return false;
+		const key = `opened:${tab.id}`;
+		return Boolean((await chrome.storage.session.get(key))[key]);
+	}, url);
+}

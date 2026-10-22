@@ -116,6 +116,21 @@ async function suggest(
 		tabId,
 		title: `Use ${card.issuer} ${card.name} · ${best.reason}`,
 	});
+	await openOncePerTab(tabId, sender.tab?.windowId);
+}
+
+// Opens the popup the first time a tab reaches checkout, so it doesn't nag on
+// every step. Chrome refuses when the window isn't focused; the badge stays.
+async function openOncePerTab(tabId: number, windowId?: number) {
+	const key = `opened:${tabId}`;
+	const seen = await browser.storage.session.get(key);
+	if (seen[key]) return;
+	await browser.storage.session.set({ [key]: true });
+	try {
+		await browser.action.openPopup(windowId ? { windowId } : undefined);
+	} catch {
+		// Not focused, or the browser doesn't allow it. The badge is enough.
+	}
 }
 
 export default defineBackground(() => {
@@ -133,6 +148,10 @@ export default defineBackground(() => {
 	browser.runtime.onMessage.addListener((message, sender) => {
 		if (sender.id !== browser.runtime.id) return;
 		suggest(message, sender).catch(() => {});
+	});
+
+	browser.tabs.onRemoved.addListener((tabId) => {
+		browser.storage.session.remove(`opened:${tabId}`).catch(() => {});
 	});
 
 	browser.runtime.onInstalled.addListener(() => {
