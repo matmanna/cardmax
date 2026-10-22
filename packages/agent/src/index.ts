@@ -6,4 +6,5 @@ export * from "./merchant-text";
 export * from "./replies";
 export * from "./store";
 export * from "./strip-metadata";
+export * from "./twilio";
 export * from "./vision";
