@@ -1,6 +1,5 @@
 import {
 	type Category,
-	catalog,
 	category,
 	guessMerchant,
 	type ListingQuery,
@@ -15,6 +14,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { listingsEndpoint, searchListings } from "@/lib/api";
+import type { Catalog } from "@/lib/catalog";
 import { type ActiveTab, pageSignals, readActiveTab } from "@/lib/page";
 import { type Settings, setOverride } from "@/lib/storage";
 
@@ -24,6 +24,7 @@ type Props = {
 	wallet: WalletCard[];
 	settings: Settings;
 	onChange: () => void;
+	catalog: Catalog;
 };
 
 type Lookup =
@@ -41,15 +42,14 @@ const checkoutNames = {
 	square: "Square",
 } as const;
 
-const cardName = new Map(
-	catalog.map((card) => [card.id, `${card.issuer} ${card.name}`]),
-);
-
 function usd(value: number) {
 	return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export function PageTab({ wallet, settings, onChange }: Props) {
+export function PageTab({ wallet, settings, catalog, onChange }: Props) {
+	const cardName = new Map(
+		catalog.cards.map((card) => [card.id, `${card.issuer} ${card.name}`]),
+	);
 	const [page, setPage] = useState<ActiveTab | null>(null);
 	const [product, setProduct] = useState<Product | null>(null);
 	const [amount, setAmount] = useState(100);
@@ -67,7 +67,12 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 	}, []);
 
 	const merchant = page
-		? guessMerchant(page.hostname, pageSignals(page.raw), settings.overrides)
+		? guessMerchant(
+				page.hostname,
+				pageSignals(page.raw),
+				settings.overrides,
+				catalog.merchants,
+			)
 		: null;
 
 	if (!merchant) {
@@ -80,7 +85,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 
 	const ranked = recommend(
 		wallet,
-		catalog,
+		catalog.cards,
 		merchant,
 		amount,
 		settings.centsPerPoint,
@@ -102,7 +107,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 				results: rankListings(
 					listings,
 					wallet,
-					catalog,
+					catalog.cards,
 					settings.centsPerPoint,
 					settings.overrides,
 				),
@@ -115,7 +120,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 		}
 	}
 
-	const hasPoints = catalog.some(
+	const hasPoints = catalog.cards.some(
 		(card) =>
 			card.rewardCurrency === "points" &&
 			wallet.some((held) => held.cardId === card.id),

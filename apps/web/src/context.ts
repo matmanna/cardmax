@@ -34,6 +34,7 @@ export async function createContext({
 	return {
 		db,
 		session,
+		headers: req.headers,
 		clientKey: clientKey(req.headers),
 		listings: { bestBuyApiKey: ENV.BESTBUY_API_KEY || undefined },
 		agentSecret: ENV.BETTER_AUTH_SECRET,

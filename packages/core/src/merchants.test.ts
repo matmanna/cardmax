@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { guessMerchant, merchantMap, normalizeDomain } from "./merchants";
+import {
+	guessMerchant,
+	merchantMap,
+	normalizeDomain,
+	supportedStoreDomains,
+	supportedStoreOrigins,
+} from "./merchants";
 import { type Category, category, type MerchantGuess } from "./schema";
 
 describe("normalizeDomain", () => {
@@ -232,5 +238,27 @@ describe("guessMerchant on checkout and payment hosts", () => {
 		);
 		expect(guess.category).toBe("dining");
 		expect(guess.source).toBe("user_override");
+	});
+});
+
+describe("supportedStoreOrigins", () => {
+	test("covers every curated store, subdomains included", () => {
+		expect(supportedStoreOrigins).toHaveLength(supportedStoreDomains.length);
+		expect(supportedStoreOrigins).toContain("https://*.bestbuy.com/*");
+		expect(supportedStoreOrigins).toContain("https://*.amazon.com/*");
+	});
+});
+
+describe("guessMerchant with a pulled store list", () => {
+	test("uses the given map instead of the bundled one", () => {
+		const guess = guessMerchant(
+			"www.newstore.com",
+			undefined,
+			{},
+			{
+				"newstore.com": "grocery",
+			},
+		);
+		expect(guess).toMatchObject({ category: "grocery", source: "curated" });
 	});
 });

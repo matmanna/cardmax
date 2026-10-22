@@ -64,6 +64,21 @@ export async function setOverride(
 	await updateSettings({ overrides: { ...overrides, [domain]: value } });
 }
 
+// The account link the web app handed over. The token only reaches wallet calls.
+const link = z.object({ token: z.string(), email: z.string() });
+export type Link = z.infer<typeof link>;
+
+export async function getLink(): Promise<Link | null> {
+	const { link: stored } = await browser.storage.local.get("link");
+	const parsed = link.safeParse(stored);
+	return parsed.success ? parsed.data : null;
+}
+
+export async function setLink(value: Link | null): Promise<void> {
+	if (value) await browser.storage.local.set({ link: link.parse(value) });
+	else await browser.storage.local.remove("link");
+}
+
 // Revoke: stop every send and delete everything Cardmax stored on this device.
 export async function revokeAll(): Promise<void> {
 	await browser.storage.local.clear();

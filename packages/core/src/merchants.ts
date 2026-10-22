@@ -283,6 +283,8 @@ export function guessMerchant(
 	hostname: string,
 	signals?: PageSignals,
 	overrides: Record<string, Category> = {},
+	// The extension passes the store list it pulled from the API; core's is the fallback.
+	curatedMap: Record<string, Category> = merchantMap,
 ): MerchantGuess {
 	const domain = normalizeDomain(hostname);
 
@@ -296,7 +298,7 @@ export function guessMerchant(
 		};
 	}
 
-	const curated = merchantMap[domain];
+	const curated = curatedMap[domain];
 	if (curated) {
 		return { domain, category: curated, confidence: "high", source: "curated" };
 	}
@@ -337,3 +339,11 @@ export function guessMerchant(
 		source: "page_heuristic",
 	};
 }
+
+// Stores Cardmax knows well enough to open by itself at checkout. One Chrome
+// prompt grants all of them; "*." also matches the bare domain.
+export const supportedStoreDomains = Object.keys(merchantMap);
+
+export const supportedStoreOrigins = supportedStoreDomains.map(
+	(domain) => `https://*.${domain}/*`,
+);

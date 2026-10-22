@@ -1,13 +1,43 @@
-import { type Listing, type ListingQuery, listing } from "@cardmax/core";
+import {
+	type CatalogResponse,
+	catalogResponse,
+	type DeviceWallet,
+	deviceTokenHeader,
+	deviceWallet,
+	type Listing,
+	type ListingQuery,
+	listing,
+	type WalletCard,
+} from "@cardmax/core";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { z } from "zod";
 
 const apiUrl = import.meta.env.WXT_API_URL as string | undefined;
 
-type ListingsClient = {
+export const apiConfigured = Boolean(apiUrl);
+
+type CloudClient = {
 	listings: { search(input: ListingQuery): Promise<unknown> };
+	catalog: { list(): Promise<unknown> };
+	device: {
+		wallet: {
+			get(): Promise<unknown>;
+			put(input: WalletCard[]): Promise<unknown>;
+		};
+		unlink(): Promise<unknown>;
+	};
 };
+
+// The device token goes only on wallet calls, never on listings or catalog.
+function client(token?: string) {
+	return createORPCClient<CloudClient>(
+		new RPCLink({
+			url: `${apiUrl}/api/rpc`,
+			headers: token ? { [deviceTokenHeader]: token } : {},
+		}),
+	);
+}
 
 // Shown when no API is configured, so the consent flow can be demoed offline.
 const sample: Listing[] = [
@@ -33,8 +63,25 @@ export const listingsEndpoint = apiUrl
 
 export async function searchListings(query: ListingQuery): Promise<Listing[]> {
 	if (!apiUrl) return sample;
-	const client = createORPCClient<ListingsClient>(
-		new RPCLink({ url: `${apiUrl}/api/rpc` }),
-	);
-	return z.array(listing).parse(await client.listings.search(query));
+	return z.array(listing).parse(await client().listings.search(query));
+}
+
+// Public card and store data. Nothing personal goes up.
+export async function fetchCatalog(): Promise<CatalogResponse> {
+	return catalogResponse.parse(await client().catalog.list());
+}
+
+export async function getAccountWallet(token: string): Promise<DeviceWallet> {
+	return deviceWallet.parse(await client(token).device.wallet.get());
+}
+
+export async function putAccountWallet(
+	token: string,
+	cards: WalletCard[],
+): Promise<DeviceWallet> {
+	return deviceWallet.parse(await client(token).device.wallet.put(cards));
+}
+
+export async function unlinkDevice(token: string): Promise<void> {
+	await client(token).device.unlink();
 }

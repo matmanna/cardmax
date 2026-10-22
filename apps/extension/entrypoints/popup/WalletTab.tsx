@@ -1,19 +1,36 @@
-import { catalog, type WalletCard } from "@cardmax/core";
+import type { WalletCard } from "@cardmax/core";
+
+import type { Catalog } from "@/lib/catalog";
 import { removeAllSiteAccess } from "@/lib/permissions";
 import {
+	type Link,
 	revokeAll,
 	type Settings,
 	updateSettings,
 	updateWallet,
 } from "@/lib/storage";
+import { disconnect } from "@/lib/sync";
+
+// Same fallback as externally_connectable in wxt.config.ts.
+const webOrigin =
+	(import.meta.env.WXT_WEB_ORIGIN as string | undefined) ??
+	"http://localhost:3001";
 
 type Props = {
 	wallet: WalletCard[];
 	settings: Settings;
+	catalog: Catalog;
+	link: Link | null;
 	onChange: () => void;
 };
 
-export function WalletTab({ wallet, settings, onChange }: Props) {
+export function WalletTab({
+	wallet,
+	settings,
+	catalog,
+	link,
+	onChange,
+}: Props) {
 	const held = new Set(wallet.map((card) => card.cardId));
 
 	async function toggle(cardId: string) {
@@ -26,7 +43,13 @@ export function WalletTab({ wallet, settings, onChange }: Props) {
 	}
 
 	async function revoke() {
+		await disconnect();
 		await Promise.all([revokeAll(), removeAllSiteAccess()]);
+		onChange();
+	}
+
+	async function unlink() {
+		await disconnect();
 		onChange();
 	}
 
@@ -39,7 +62,7 @@ export function WalletTab({ wallet, settings, onChange }: Props) {
 		<section>
 			<p className="intro">Pick the cards you hold. Only the name is saved.</p>
 			<ul className="rows cards">
-				{catalog.map((card) => (
+				{catalog.cards.map((card) => (
 					<li key={card.id}>
 						<label>
 							<input
@@ -62,6 +85,26 @@ export function WalletTab({ wallet, settings, onChange }: Props) {
 					</li>
 				))}
 			</ul>
+			<div className="account-sync">
+				{link ? (
+					<>
+						<span>
+							<span className="dot high" />
+							Synced with {link.email}
+						</span>
+						<button type="button" className="link-button" onClick={unlink}>
+							Disconnect
+						</button>
+					</>
+				) : (
+					<>
+						<span>Only on this device</span>
+						<a href={`${webOrigin}/sync`} target="_blank" rel="noreferrer">
+							Sync with an account
+						</a>
+					</>
+				)}
+			</div>
 			<div className="danger-zone">
 				{settings.sendsEnabled ? (
 					<button type="button" className="danger" onClick={revoke}>

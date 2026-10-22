@@ -1,15 +1,22 @@
 import {
-	catalog,
 	extensionMessage,
 	guessMerchant,
+	type PageRaw,
 	parseProduct,
 	recommend,
 	type WalletCard,
 } from "@cardmax/core";
-import { z } from "zod";
 
-import { pageSignals } from "@/lib/page";
+import { getCatalog, refreshCatalog } from "@/lib/catalog";
+import { collect, pageSignals } from "@/lib/page";
 import { getSettings, getWallet, setWallet } from "@/lib/storage";
+import {
+	connect,
+	disconnect,
+	isApplyingRemote,
+	pullFromAccount,
+	pushToAccount,
+} from "@/lib/sync";
 
 // Same fallback as externally_connectable in wxt.config.ts.
 const webOrigin =
@@ -37,74 +44,116 @@ async function handle(
 			await setWallet(parsed.data.wallet);
 			return { ok: true };
 		}
+		case "cardmax:connect": {
+			const { sendsEnabled } = await getSettings();
+			if (!sendsEnabled) return { error: "Sync is turned off on this device" };
+			await connect(parsed.data.token, parsed.data.email);
+			log("connected");
+			return { ok: true };
+		}
+		case "cardmax:disconnect":
+			await disconnect();
+			return { ok: true };
 	}
 }
 
 /* Automatic suggestions on sites the user turned on ----------------------- */
 
-const checkoutScriptId = "cardmax-checkout";
-
-// The checkout script runs only on origins the user granted from the popup.
-async function syncCheckoutScript(): Promise<void> {
-	const { origins = [] } = await browser.permissions.getAll();
-	const matches = origins.filter((origin) => origin !== "https://*/*");
-	const registered = await browser.scripting.getRegisteredContentScripts({
-		ids: [checkoutScriptId],
-	});
-	if (registered.length) {
-		await browser.scripting.unregisterContentScripts({
-			ids: [checkoutScriptId],
-		});
-	}
-	if (!matches.length) return;
-	await browser.scripting.registerContentScripts([
-		{
-			id: checkoutScriptId,
-			matches,
-			js: ["content-scripts/checkout.js"],
-			runAt: "document_idle",
-		},
-	]);
+// Local only: shows in the service worker console under chrome://extensions.
+function log(...parts: unknown[]) {
+	console.info("[cardmax]", ...parts);
 }
 
-const checkoutMessage = z.object({
-	type: z.literal("cardmax:checkout"),
-	raw: z.object({
-		jsonLd: z.array(z.string()),
-		meta: z.record(z.string(), z.string()),
-		title: z.string(),
-	}),
-});
+// Which checkout stage a URL is at, if any. Amazon's checkout lives under /gp/buy/.
+function checkoutStage(url: string): "cart" | "checkout" | null {
+	const { pathname } = new URL(url);
+	if (/(checkout|payment|\/gp\/buy\/)/i.test(pathname)) return "checkout";
+	if (/(cart|basket|bag)/i.test(pathname)) return "cart";
+	return null;
+}
+
+// Watches tab URLs, which includes in-page navigations (Best Buy goes from
+// cart to checkout with pushState). Chrome only reports URLs for sites the
+// user granted, so nothing else is visible here.
+async function onTabUrl(tab: Browser.tabs.Tab): Promise<void> {
+	if (tab.id === undefined) return;
+	if (!tab.url) {
+		log("tab updated, but the browser hid its URL (site not granted)");
+		return;
+	}
+	if (!tab.url.startsWith("https:")) return;
+	const stage = checkoutStage(tab.url);
+	log("url", tab.url, "stage", stage);
+	if (!stage) {
+		await browser.action.setBadgeText({ tabId: tab.id, text: "" });
+		return;
+	}
+	const origin = new URL(tab.url).origin;
+	if (!(await browser.permissions.contains({ origins: [`${origin}/*`] }))) {
+		log("no site access for", origin, "(turn the switch on in the popup)");
+		return;
+	}
+	const [result] = await browser.scripting.executeScript({
+		target: { tabId: tab.id },
+		func: collect,
+	});
+	if (!result?.result) {
+		log("could not read the page");
+		return;
+	}
+	// The popup reads this when it opens by itself, since an auto-opened popup
+	// gets no activeTab grant to read the page on its own.
+	await browser.storage.session.set({
+		[`context:${tab.id}`]: { url: tab.url, raw: result.result },
+	});
+	await suggest(tab.id, tab.windowId, tab.url, stage, result.result);
+}
 
 // Shows the best card as a toolbar badge. Nothing leaves the device.
 async function suggest(
-	message: unknown,
-	sender: Browser.runtime.MessageSender,
+	tabId: number,
+	windowId: number,
+	url: string,
+	stage: "cart" | "checkout",
+	raw: PageRaw,
 ): Promise<void> {
-	const parsed = checkoutMessage.safeParse(message);
-	const tabId = sender.tab?.id;
-	if (!parsed.success || tabId === undefined || !sender.url) return;
-
-	const { raw } = parsed.data;
-	const [wallet, settings] = await Promise.all([getWallet(), getSettings()]);
+	const [wallet, settings, catalog] = await Promise.all([
+		getWallet(),
+		getSettings(),
+		getCatalog(),
+	]);
+	if (wallet.length === 0) {
+		// Nothing to suggest yet, so open the popup on its Wallet tab instead.
+		log("wallet is empty, opening the popup to add cards");
+		await browser.action.setBadgeText({ tabId, text: "+" });
+		await browser.action.setTitle({
+			tabId,
+			title: "Add your cards to Cardmax",
+		});
+		await openOncePerStage(tabId, windowId, stage);
+		return;
+	}
 	const merchant = guessMerchant(
-		new URL(sender.url).hostname,
+		new URL(url).hostname,
 		pageSignals(raw),
 		settings.overrides,
+		catalog.merchants,
 	);
 	const amount = parseProduct(raw)?.priceUsd ?? 100;
 	const [best] = recommend(
 		wallet,
-		catalog,
+		catalog.cards,
 		merchant,
 		amount,
 		settings.centsPerPoint,
 	);
-	const card = best && catalog.find((c) => c.id === best.cardId);
+	const card = best && catalog.cards.find((c) => c.id === best.cardId);
 	if (!best || !card) {
+		log("no card in the catalog matches the wallet");
 		await browser.action.setBadgeText({ tabId, text: "" });
 		return;
 	}
+	log("suggest", card.name, best.reason, "for", merchant);
 
 	const unit = card.rewardCurrency === "cash" ? "%" : "x";
 	await browser.action.setBadgeBackgroundColor({ tabId, color: "#0B1B2B" });
@@ -116,24 +165,38 @@ async function suggest(
 		tabId,
 		title: `Use ${card.issuer} ${card.name} · ${best.reason}`,
 	});
-	await openOncePerTab(tabId, sender.tab?.windowId);
+	await openOncePerStage(tabId, windowId, stage);
 }
 
-// Opens the popup the first time a tab reaches checkout, so it doesn't nag on
-// every step. Chrome refuses when the window isn't focused; the badge stays.
-async function openOncePerTab(tabId: number, windowId?: number) {
-	const key = `opened:${tabId}`;
+// Opens the popup once at the cart and once at checkout in each tab, not on
+// every step. The browser refuses when the window isn't focused; the badge stays.
+async function openOncePerStage(
+	tabId: number,
+	windowId: number,
+	stage: "cart" | "checkout",
+) {
+	const key = `opened:${tabId}:${stage}`;
 	const seen = await browser.storage.session.get(key);
-	if (seen[key]) return;
+	if (seen[key]) {
+		log("popup already opened at", stage, "in this tab");
+		return;
+	}
 	await browser.storage.session.set({ [key]: true });
 	try {
-		await browser.action.openPopup(windowId ? { windowId } : undefined);
-	} catch {
+		await browser.action.openPopup({ windowId });
+		log("opened popup at", stage);
+	} catch (error) {
 		// Not focused, or the browser doesn't allow it. The badge is enough.
+		log("openPopup failed:", String(error));
 	}
 }
 
 export default defineBackground(() => {
+	log("background started", browser.runtime.getManifest().version);
+	browser.permissions
+		.getAll()
+		.then(({ origins }) => log("granted sites", origins ?? []));
+
 	browser.runtime.onMessageExternal.addListener(
 		(message, sender, sendResponse) => {
 			handle(message, sender)
@@ -144,23 +207,46 @@ export default defineBackground(() => {
 		},
 	);
 
-	// Only the extension's own content script may send this.
+	// Account sync and the public catalog, on start and whenever the popup asks.
+	const refresh = () =>
+		Promise.allSettled([refreshCatalog(), pullFromAccount()]).then(
+			(results) => {
+				for (const result of results) {
+					if (result.status === "rejected")
+						log("sync failed:", String(result.reason));
+				}
+			},
+		);
+	refresh();
+
+	// The popup and nothing else may ask for a pull.
 	browser.runtime.onMessage.addListener((message, sender) => {
 		if (sender.id !== browser.runtime.id) return;
-		suggest(message, sender).catch(() => {});
+		if ((message as { type?: string })?.type !== "cardmax:pull") return;
+		return refresh();
+	});
+
+	// Local wallet edits go up to the account when linked.
+	browser.storage.onChanged.addListener((changes, area) => {
+		if (area !== "local" || !changes.wallet || isApplyingRemote()) return;
+		getWallet()
+			.then(pushToAccount)
+			.catch((error) => log("push failed:", String(error)));
+	});
+
+	// A URL change (load or pushState) or a finished load on a granted site.
+	browser.tabs.onUpdated.addListener((_tabId, info, tab) => {
+		if (!info.url && info.status !== "complete") return;
+		onTabUrl(tab).catch((error) => log("error", String(error)));
 	});
 
 	browser.tabs.onRemoved.addListener((tabId) => {
-		browser.storage.session.remove(`opened:${tabId}`).catch(() => {});
-	});
-
-	browser.runtime.onInstalled.addListener(() => {
-		syncCheckoutScript().catch(() => {});
-	});
-	browser.permissions.onAdded.addListener(() => {
-		syncCheckoutScript().catch(() => {});
-	});
-	browser.permissions.onRemoved.addListener(() => {
-		syncCheckoutScript().catch(() => {});
+		browser.storage.session
+			.remove([
+				`opened:${tabId}:cart`,
+				`opened:${tabId}:checkout`,
+				`context:${tabId}`,
+			])
+			.catch(() => {});
 	});
 });

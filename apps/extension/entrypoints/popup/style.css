@@ -1,7 +1,6 @@
-/* Tokens match the "Popup — this page" artboard in the Cardmax Paper file. */
+/* Tokens match the popup in the "Landing — product" artboard in the Cardmax Paper file. */
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
-@import "@fontsource/instrument-serif";
 
 :root {
 	--background: #ffffff;
@@ -13,7 +12,6 @@
 	--danger: #b4232a;
 	--warning: #b7791f;
 	--sans: "Geist Variable", system-ui, sans-serif;
-	--serif: "Instrument Serif", Georgia, serif;
 	--mono: "Geist Mono Variable", ui-monospace, monospace;
 }
 
@@ -99,7 +97,10 @@ header {
 }
 
 h1 {
-	font: 400 24px / 28px var(--serif);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font: 600 15px / 20px var(--sans);
 	letter-spacing: -0.01em;
 }
 
@@ -211,7 +212,7 @@ nav button[aria-pressed="true"] {
 }
 
 .winner h2 {
-	font: 400 34px / 36px var(--serif);
+	font: 600 22px / 28px var(--sans);
 	letter-spacing: -0.015em;
 }
 
@@ -418,4 +419,36 @@ nav button[aria-pressed="true"] {
 
 .switch[aria-checked="true"]::after {
 	left: 16px;
+}
+
+/* Account sync (Paper: popup wallet, "Account sync" row) */
+
+.account-sync {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin: 0 20px;
+	padding: 12px 0;
+	border-top: 1px solid var(--border);
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--muted);
+}
+
+.account-sync > span {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.account-sync a,
+.link-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	font: 500 12px / 16px var(--sans);
+	color: var(--foreground);
+	text-decoration: none;
+	cursor: pointer;
 }

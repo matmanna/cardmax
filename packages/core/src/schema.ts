@@ -105,5 +105,29 @@ export const extensionMessage = z.discriminatedUnion("type", [
 		type: z.literal("cardmax:setWallet"),
 		wallet: z.array(walletCard),
 	}),
+	// The web app hands over a device token so the extension syncs by itself.
+	z.object({
+		type: z.literal("cardmax:connect"),
+		token: z.string().min(32).max(128),
+		email: z.string().max(320),
+	}),
+	z.object({ type: z.literal("cardmax:disconnect") }),
 ]);
 export type ExtensionMessage = z.infer<typeof extensionMessage>;
+
+// Public card data the extension pulls down. No personal data goes up for it.
+export const catalogResponse = z.object({
+	cards: z.array(cardProduct),
+	merchants: z.array(z.object({ domain: z.string(), category })),
+	updatedAt: z.string(),
+});
+export type CatalogResponse = z.infer<typeof catalogResponse>;
+
+// The account wallet as the device sees it, via the x-cardmax-device header.
+export const deviceWallet = z
+	.object({ cards: z.array(walletCard), updatedAt: z.string() })
+	.nullable();
+export type DeviceWallet = z.infer<typeof deviceWallet>;
+
+// Header the extension sends with its device token. Wallet procedures only.
+export const deviceTokenHeader = "x-cardmax-device";
