@@ -195,7 +195,82 @@ function RouteComponent() {
 					</div>
 				</section>
 			</div>
+
+			<PhonePanel />
 		</div>
+	);
+}
+
+// Link a phone to the text agent with a one-time code the user texts in.
+function PhonePanel() {
+	const queryClient = useQueryClient();
+	const status = useQuery(orpc.phone.status.queryOptions());
+	const [pending, setPending] = useState<{ code: string; expiresAt: Date }>();
+	const refreshStatus = () =>
+		queryClient.invalidateQueries({ queryKey: orpc.phone.status.key() });
+
+	const createCode = useMutation(
+		orpc.phone.createLinkCode.mutationOptions({
+			onSuccess: (data) => setPending(data),
+			onError: (error) => toast.error(error.message),
+		}),
+	);
+	const unlink = useMutation(
+		orpc.phone.unlink.mutationOptions({
+			onSuccess: () => {
+				toast.success("Phone unlinked");
+				refreshStatus();
+			},
+			onError: (error) => toast.error(error.message),
+		}),
+	);
+
+	return (
+		<section className="space-y-3 border p-4">
+			<h2 className="font-semibold">Text agent</h2>
+			<p className="text-muted-foreground text-sm">
+				Text a store name and get the card in your synced wallet that earns the
+				most there. Your texts pass through the messaging provider and your
+				carrier, and both can read them.
+			</p>
+			{status.data?.linked ? (
+				<div className="flex flex-wrap items-center gap-3">
+					<p>Linked to the number ending in {status.data.last4}.</p>
+					<Button
+						type="button"
+						variant="outline"
+						disabled={unlink.isPending}
+						onClick={() => unlink.mutate({})}
+					>
+						Unlink
+					</Button>
+				</div>
+			) : (
+				<div className="space-y-2">
+					{pending && (
+						<p>
+							Text <strong className="font-mono text-lg">{pending.code}</strong>{" "}
+							to the Cardmax number. It expires at{" "}
+							{new Date(pending.expiresAt).toLocaleTimeString()}.
+						</p>
+					)}
+					<div className="flex flex-wrap gap-2">
+						<Button
+							type="button"
+							disabled={createCode.isPending}
+							onClick={() => createCode.mutate({})}
+						>
+							{pending ? "New code" : "Get link code"}
+						</Button>
+						{pending && (
+							<Button type="button" variant="outline" onClick={refreshStatus}>
+								I sent it
+							</Button>
+						)}
+					</div>
+				</div>
+			)}
+		</section>
 	);
 }
 

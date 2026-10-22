@@ -47,5 +47,12 @@ export function testContext(
 	const session = options.user
 		? ({ user: options.user, session: {} } as unknown as Session)
 		: null;
-	return { db, session, headers, clientKey: null, listings: {} };
+	return {
+		db,
+		session,
+		headers,
+		clientKey: null,
+		listings: {},
+		agentSecret: "test-agent-secret",
+	};
 }
