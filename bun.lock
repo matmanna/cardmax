@@ -42,6 +42,7 @@
     "apps/web": {
       "name": "web",
       "dependencies": {
+        "@cardmax/agent": "workspace:*",
         "@cardmax/api": "workspace:*",
         "@cardmax/auth": "workspace:*",
         "@cardmax/core": "workspace:*",
@@ -86,9 +87,24 @@
         "web-vitals": "^6.2.3",
       },
     },
+    "packages/agent": {
+      "name": "@cardmax/agent",
+      "dependencies": {
+        "@cardmax/core": "workspace:*",
+        "@cardmax/db": "workspace:*",
+        "drizzle-orm": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@cardmax/config": "workspace:*",
+        "@types/bun": "^1.4.3",
+        "typescript": "catalog:",
+      },
+    },
     "packages/api": {
       "name": "@cardmax/api",
       "dependencies": {
+        "@cardmax/agent": "workspace:*",
         "@cardmax/auth": "workspace:*",
         "@cardmax/core": "workspace:*",
         "@cardmax/db": "workspace:*",
@@ -145,6 +161,7 @@
       },
       "devDependencies": {
         "@cardmax/config": "workspace:*",
+        "@types/bun": "^1.4.3",
         "@types/pg": "^8.23.1",
         "drizzle-kit": "1.0.0-rc.4",
         "typescript": "catalog:",
@@ -313,6 +330,8 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.6.2", "", { "os": "win32", "cpu": "x64" }, "sha512-FVlWD+mDDz8nN5LWKRWUhhb7wKIK0VE3oXQvQBX7Fwwj00CvqMVhMyiz1iz8O5aZGmnkhFlKSwJPrUvMh5prQw=="],
 
     "@bramus/specificity": ["@bramus/specificity@2.4.3", "", { "dependencies": { "css-tree": "^3.2.1" }, "bin": { "specificity": "bin/cli.js" } }, "sha512-0GEz8qJWokkUVYQYRukmkSHIFNoBH8QTreeHrAFbvz1XFYc3Y+puhMs8PQ5x8GNugiC2l5jvDBXKLbBIByeSBw=="],
+
+    "@cardmax/agent": ["@cardmax/agent@workspace:packages/agent"],
 
     "@cardmax/api": ["@cardmax/api@workspace:packages/api"],
 

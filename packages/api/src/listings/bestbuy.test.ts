@@ -103,6 +103,22 @@ describe("searchBestBuy", () => {
 		expect(error).toBe("Best Buy returned 403");
 	});
 
+	test("drops listings that are not https Best Buy links", async () => {
+		const product = airpods.products[0] as (typeof airpods.products)[number];
+		const { fetcher } = fakeFetch([
+			{
+				products: [
+					{ ...product, url: "javascript:alert(1)" },
+					{ ...product, url: "http://www.bestbuy.com/x" },
+					{ ...product, url: "https://bestbuy.com.evil.example/x" },
+					product,
+				],
+			},
+		]);
+		const listings = await searchBestBuy({ title: "airpods" }, "k", fetcher);
+		expect(listings.map((l) => l.url)).toEqual([product.url]);
+	});
+
 	test("ignores malformed responses", async () => {
 		const { fetcher } = fakeFetch([{ products: [{ name: 1 }] }]);
 		expect(await searchBestBuy({ title: "tv" }, "k", fetcher)).toEqual([]);
