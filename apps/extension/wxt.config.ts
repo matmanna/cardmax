@@ -27,6 +27,7 @@ export default defineConfig({
 			description: "Pick the best card for this merchant, on your device.",
 			// No host permissions by default. Per-site access is requested at runtime.
 			permissions: ["activeTab", "storage", "scripting"],
+			action: { default_title: "Cardmax" },
 			optional_host_permissions: ["https://*/*"],
 			...(e2e ? { host_permissions: e2eHosts } : {}),
 			// Only the web app can message the extension.
