@@ -6,6 +6,7 @@ import {
 	Hero,
 	HowItWorks,
 	Nav,
+	PhotoText,
 	Privacy,
 	WaysIn,
 } from "@/components/landing/sections";
@@ -32,6 +33,7 @@ function Landing() {
 				<Hero />
 				<HowItWorks />
 				<WaysIn />
+				<PhotoText />
 				<Privacy />
 				<Closing />
 			</main>

@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 
 import { HeroDemo } from "./hero-demo";
 import { Mark } from "./mark";
+import { PhotoDemo } from "./photo";
 import { Reveal } from "./reveal";
 import { Steps } from "./steps";
 import { Surfaces } from "./surfaces";
@@ -67,6 +68,34 @@ export function WaysIn() {
 			<Reveal>
 				<h2>One wallet, three ways in.</h2>
 				<Surfaces />
+			</Reveal>
+		</section>
+	);
+}
+
+export function PhotoText() {
+	return (
+		<section className="lp-section" id="photo">
+			<Reveal className="lp-photo-row">
+				<div className="lp-photo-copy">
+					<h2>Standing outside? Send a photo.</h2>
+					<p>
+						Snap the storefront and text it. Pointmaxx reads the sign and
+						replies with the card to use.
+					</p>
+					<ol>
+						<li>
+							<span>01</span>Location data is stripped from the photo
+						</li>
+						<li>
+							<span>02</span>The store name is read from the sign
+						</li>
+						<li>
+							<span>03</span>The photo is deleted after the reply
+						</li>
+					</ol>
+				</div>
+				<PhotoDemo />
 			</Reveal>
 		</section>
 	);
