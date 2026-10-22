@@ -30,6 +30,7 @@
 		"better-auth": "catalog:",
 		"lucide-react": "^1.56.0",
 		"next-themes": "catalog:",
+		"nitro": "^3.0.260903-beta",
 		"react": "^19.3.0",
 		"react-dom": "^19.3.0",
 		"sonner": "catalog:",
