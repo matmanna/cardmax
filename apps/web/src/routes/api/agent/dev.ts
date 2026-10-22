@@ -1,15 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
-import {
-	createAgentStore,
-	createStoreIdentifier,
-	fetchDataUrl,
-	handleInbound,
-} from "@cardmax/agent";
+import { createAgentStore, fetchDataUrl, handleInbound } from "@cardmax/agent";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 
 import { ENV } from "../../../env.server";
 import { db } from "../../../services";
+import { identifyStorePromise } from "../../../vision.server";
 
 // Provider-free channel for local testing: POST {from, text}, get {reply}.
 // Real providers get their own route with signature checks. Fails closed: it needs
@@ -22,9 +17,6 @@ const devInbound = z.object({
 });
 
 const store = createAgentStore(db, ENV.BETTER_AUTH_SECRET);
-const identifyStore = ENV.ANTHROPIC_API_KEY
-	? createStoreIdentifier(new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY }))
-	: undefined;
 
 export const Route = createFileRoute("/api/agent/dev")({
 	server: {
@@ -53,7 +45,7 @@ export const Route = createFileRoute("/api/agent/dev")({
 					store,
 					webUrl: ENV.BETTER_AUTH_URL,
 					fetchImage: fetchDataUrl,
-					identifyStore,
+					identifyStore: await identifyStorePromise,
 				});
 				return Response.json({ reply });
 			},

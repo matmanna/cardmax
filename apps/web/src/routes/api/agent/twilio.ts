@@ -1,7 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import {
 	createAgentStore,
-	createStoreIdentifier,
 	createTwilioImageFetcher,
 	deleteTwilioMedia,
 	handleInbound,
@@ -14,13 +12,11 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { ENV } from "../../../env.server";
 import { db } from "../../../services";
+import { identifyStorePromise } from "../../../vision.server";
 
 // Twilio SMS/MMS webhook ("A message comes in", HTTP POST). Fails closed: 404 until
 // both Twilio credentials are set, 403 on a bad signature. Logs nothing about the message.
 const store = createAgentStore(db, ENV.BETTER_AUTH_SECRET);
-const identifyStore = ENV.ANTHROPIC_API_KEY
-	? createStoreIdentifier(new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY }))
-	: undefined;
 
 export const Route = createFileRoute("/api/agent/twilio")({
 	server: {
@@ -50,7 +46,7 @@ export const Route = createFileRoute("/api/agent/twilio")({
 							store,
 							webUrl: ENV.BETTER_AUTH_URL,
 							fetchImage: createTwilioImageFetcher(accountSid, authToken),
-							identifyStore,
+							identifyStore: await identifyStorePromise,
 						})
 					: null;
 				// Don't leave photos sitting on Twilio.
