@@ -28,13 +28,26 @@ These came out of a design review on 2026-10-22. Background research and sources
 
 ## Text agent
 
-- The text agent uses Photon (Spectrum SDK) on the free tier, which allows up to 10 users on a shared number. The user texts first.
-- Photon can read every message in plaintext. So can carriers on SMS fallback. The first reply says so.
+- **Channel (changed):** the agent sits behind a channel adapter, so the provider can change without a rewrite. Photon (Spectrum SDK) is iMessage-first, and part of the team uses Android, so Twilio SMS and MMS is being evaluated as the first channel. Twilio's MCP server would let an agent buy the number and set the webhook. The final pick and setup steps will be recorded here.
+- Whichever provider is used can read every message and photo in plaintext. So can carriers on SMS. The first reply says so.
 - The bot never asks for amounts or card digits, and it never stores them.
 - The server keeps no message log beyond the current request.
-- Replies are rewards math, never financial advice. Photon's terms require this.
+- Replies are rewards math, never financial advice. Photon's terms require this, and it is the right framing anyway.
 - **Phone linking:** the web app shows a one-time code, and the user texts it to the bot.
-- **Why Photon over Twilio:** Twilio SMS is also plaintext, both to Twilio and to the carriers. It also needs A2P 10DLC or toll-free verification, which takes days to weeks. Photon's iMessage path adds Apple encryption up to Photon's relay. Neither channel is end-to-end encrypted to the bot.
+- **Tradeoff:** Twilio SMS is plaintext to Twilio and the carriers, and texting real US users needs A2P 10DLC or toll-free verification. Photon's iMessage path adds Apple encryption up to Photon's relay, but it doesn't reach Android. Neither channel is end-to-end encrypted to the bot.
+
+## Storefront photos (text agent)
+
+A user can text a photo of a storefront or its logo instead of typing the store name.
+- **Flow:** the photo arrives as an MMS or iMessage attachment. The server strips EXIF metadata, especially GPS, before doing anything else. A vision model then names the store and returns `{ name, domain, confidence }`. The domain goes through `guessMerchant()` and `recommend()` like a typed store name.
+- **Model:** Claude Haiku 5.5 (`claude-haiku-5-5`) with a fixed prompt and structured output, so replies come back in about a second. The prompt asks only for the store's identity. It ignores people, plates, and anything else in the frame.
+- **Reply:** name the store and the confidence, for example "Looks like Target (medium confidence)". Then give the card and the reason. Add "Wrong store? Reply with its name." whenever confidence isn't high.
+- **Privacy:**
+  - The photo is processed in memory and never written to our database or logs.
+  - After the reply, the server deletes the media from the messaging provider wherever the provider's API allows it.
+  - The photo goes to Anthropic's API for one request, under its standard API terms, which don't allow training on the data. The transparency page says this plainly.
+  - Photos are opt-in by nature: nothing is sent unless the user texts one.
+- **Fallback:** if the model can't identify a store, ask for the store name. Never guess a card from a blurry photo.
 
 ## Product sources
 
