@@ -1,24 +1,37 @@
 import { describe, expect, test } from "bun:test";
+import { catalog } from "@cardmax/core";
 
 import { assertWalletConsent, walletInput } from "./wallet";
+
+const cardId = catalog[0]?.id ?? "";
 
 describe("walletInput", () => {
 	test("keeps only cardId and addedAt", () => {
 		const parsed = walletInput.parse([
-			{ cardId: "chase-freedom", addedAt: "2026-10-22", last4: "4242" },
+			{ cardId, addedAt: "2026-10-22", last4: "4242" },
 		]);
-		expect(parsed).toEqual([
-			{ cardId: "chase-freedom", addedAt: "2026-10-22" },
-		]);
+		expect(parsed).toEqual([{ cardId, addedAt: "2026-10-22" }]);
 	});
 
 	test("rejects cards without an id", () => {
 		expect(() => walletInput.parse([{ addedAt: "2026-10-22" }])).toThrow();
 	});
 
+	test("rejects ids that are not in the catalog", () => {
+		expect(() =>
+			walletInput.parse([{ cardId: "my secret note", addedAt: "2026-10-22" }]),
+		).toThrow();
+	});
+
+	test("rejects long addedAt values", () => {
+		expect(() =>
+			walletInput.parse([{ cardId, addedAt: "x".repeat(41) }]),
+		).toThrow();
+	});
+
 	test("caps the wallet size", () => {
-		const cards = Array.from({ length: 101 }, (_, i) => ({
-			cardId: `c${i}`,
+		const cards = Array.from({ length: 101 }, () => ({
+			cardId,
 			addedAt: "2026-10-22",
 		}));
 		expect(() => walletInput.parse(cards)).toThrow();

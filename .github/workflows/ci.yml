@@ -15,7 +15,7 @@ jobs:
           bun-version: 1.3.12
       - run: bun install --frozen-lockfile
       - run: bunx biome ci packages/core apps/extension
-      - run: bun test packages/core
+      - run: bun test packages/core packages/api
       - run: bun run check-types
         env:
           # Placeholders so the web build validates. CI never connects to a database.

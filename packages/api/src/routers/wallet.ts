@@ -1,4 +1,4 @@
-import { walletCard } from "@cardmax/core";
+import { catalog, walletCard } from "@cardmax/core";
 import { wallet } from "@cardmax/db/schema/wallet";
 import { ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
@@ -7,7 +7,16 @@ import z from "zod";
 import { protectedProcedure } from "../index";
 
 // Unknown keys are stripped by walletCard, so nothing beyond cardId and addedAt is stored.
-export const walletInput = z.array(walletCard).max(100);
+// cardId must be a catalog id, so the server never holds free text.
+const catalogIds = new Set(catalog.map((card) => card.id));
+export const walletInput = z
+	.array(
+		walletCard.extend({
+			cardId: z.string().refine((id) => catalogIds.has(id), "Unknown card"),
+			addedAt: z.string().max(40),
+		}),
+	)
+	.max(100);
 
 export function assertWalletConsent(user: { walletSyncConsent?: boolean }) {
 	if (user.walletSyncConsent !== true) {
