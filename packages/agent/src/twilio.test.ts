@@ -95,6 +95,12 @@ describe("inboundFromForm", () => {
 		).toBeUndefined();
 	});
 
+	test("WhatsApp senders map to the same phone as SMS", () => {
+		expect(
+			inboundFromForm({ ...form, From: "whatsapp:+15551112222" })?.from,
+		).toBe("+15551112222");
+	});
+
 	test("needs a sender", () => {
 		expect(inboundFromForm({ Body: "hi" })).toBeNull();
 	});

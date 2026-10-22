@@ -22,7 +22,8 @@ export function twilioReplyXml(text: string): string {
 
 // Maps a verified webhook form to Inbound. Only the first attachment, and only images.
 export function inboundFromForm(form: Record<string, string>): Inbound | null {
-	const from = form.From;
+	// WhatsApp senders arrive as "whatsapp:+1555…". Strip it so a phone links once for both.
+	const from = form.From?.replace(/^whatsapp:/, "");
 	if (!from) return null;
 	const type = form.MediaContentType0 ?? "";
 	const imageUrl =
