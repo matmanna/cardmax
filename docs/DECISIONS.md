@@ -28,13 +28,18 @@ These came out of a design review on 2026-10-22. Background research and sources
 
 ## Text agent
 
-- **Channel (changed):** the agent sits behind a channel adapter, so the provider can change without a rewrite. Photon (Spectrum SDK) is iMessage-first, and part of the team uses Android, so Twilio SMS and MMS is being evaluated as the first channel. Twilio's MCP server would let an agent buy the number and set the webhook. The final pick and setup steps will be recorded here.
+- **Channel: Twilio SMS and MMS** (decided 2026-10-22, built by @cloudhoppr). It works on iPhone and Android, and inbound photos arrive as `MediaUrl0`, which can be deleted through the API after handling. The agent stays behind the `Channel` adapter, so Photon iMessage can be added later.
+- **Twilio constraints** (see `docs/research/03-texting-channels.md`):
+  - A trial account only sends Twilio's preset templates to verified numbers, so a real bot needs an upgraded account.
+  - US local numbers need A2P 10DLC registration, which can take weeks. Toll-free numbers need verification, which takes about three business days.
+  - Start toll-free verification now. For the live demo, use whatever path delivers by then, and test the webhook with the Twilio CLI or console in the meantime.
+  - Twilio's official MCP server is read-only docs search. `@twilio-alpha/mcp` can buy numbers and send messages, but it is a proof of concept that takes the secret on the command line. Don't give an agent spending access through it.
 - Whichever provider is used can read every message and photo in plaintext. So can carriers on SMS. The first reply says so.
 - The bot never asks for amounts or card digits, and it never stores them.
 - The server keeps no message log beyond the current request.
-- Replies are rewards math, never financial advice. Photon's terms require this, and it is the right framing anyway.
+- Replies are rewards math, never financial advice. This keeps the bot informational.
 - **Phone linking:** the web app shows a one-time code, and the user texts it to the bot.
-- **Tradeoff:** Twilio SMS is plaintext to Twilio and the carriers, and texting real US users needs A2P 10DLC or toll-free verification. Photon's iMessage path adds Apple encryption up to Photon's relay, but it doesn't reach Android. Neither channel is end-to-end encrypted to the bot.
+- **Tradeoff accepted:** Twilio SMS is plaintext to Twilio and the carriers. Photon's iMessage path would add Apple encryption up to Photon's relay, but it doesn't reach Android. Neither is end-to-end encrypted to the bot, and the transparency page says so.
 
 ## Storefront photos (text agent)
 

@@ -15,8 +15,8 @@ Two people. Each person owns separate directories, so the two of you rarely edit
 
 **New features added to the plan:**
 - **Storefront photos.** Text a photo of a store or its logo and get the best card back. See "Storefront photos" in `docs/DECISIONS.md`.
-- **Text channel that works for Android too.** Photon is iMessage-first, and part of the team uses Android. Twilio SMS and MMS is being evaluated, along with Twilio's MCP server so an agent can set it up. Build the agent behind a channel adapter (below) so the channel can change without a rewrite.
-- **Web dashboard** at `/wallet`, matching the dashboard tab on the landing page: the synced wallet table, the text agent panel, and a "what our server holds" panel.
+- **Text channel is now Twilio SMS and MMS** (@cloudhoppr is building it). It works on iPhone and Android. Start toll-free verification now, because it takes about three business days and a trial account can't send custom replies. Keep the agent behind the channel adapter (below).
+- **Platform screens for the demo flow** are designed in Paper, on the page "Platform": sign up, add cards, connect the extension, link a phone, the wallet dashboard, text agent settings, privacy and data, plan, and the storefront-photo text. Build them from those artboards.
 
 ## Ownership
 
@@ -67,7 +67,7 @@ export interface Channel {
 }
 ```
 
-`twilio.ts` and `photon.ts` each implement `Channel`. The handler calls `parse`, then the linking or recommendation logic, then `reply`, then `deleteMedia`.
+`twilio.ts` implements `Channel` now. It verifies `X-Twilio-Signature`, reads `MediaUrl0` with API-key auth, and deletes the media after replying. `photon.ts` can follow later. The handler calls `parse`, then the linking or recommendation logic, then `reply`, then `deleteMedia`.
 
 ## The contract
 
