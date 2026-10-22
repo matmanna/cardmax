@@ -45,12 +45,12 @@ Two people. Each person owns separate directories, so the two of you rarely edit
 
 ### Person A (@matmanna)
 
-| #   | Task                                                                                                              | Status        |
-| --- | ----------------------------------------------------------------------------------------------------------------- | ------------- |
-| 1   | Point the extension at the real `listings.search` once task B4 ships, and add an e2e test against a mocked API    | Waiting on B4 |
-| 2   | Per-site access button (`requestSiteAccess`), so the extension can suggest a card automatically on checkout pages | To do         |
-| 3   | Settle the text channel and write the setup steps (Twilio and MCP, or Photon)                                     | In progress   |
-| 4   | Keep the Paper file and the catalog current, and add cards on request                                             | Ongoing       |
+| #   | Task                                                                                                                      | Status                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | Point the extension at the real `listings.search`, with an e2e test against a mocked API that enforces the exact request  | **Done** (extension side). Goes live when B4 ships |
+| 2   | "Automatic on this site": a popup switch grants one site, and checkout pages there set a toolbar badge with the best card | **Done**                                           |
+| 3   | Settle the text channel and write the setup steps (Twilio and MCP, or Photon)                                             | In progress                                        |
+| 4   | Keep the Paper file and the catalog current, and add cards on request                                                     | Ongoing                                            |
 
 ## The text agent's channel adapter
 

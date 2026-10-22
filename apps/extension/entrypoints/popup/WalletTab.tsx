@@ -1,5 +1,5 @@
 import { catalog, type WalletCard } from "@cardmax/core";
-
+import { removeAllSiteAccess } from "@/lib/permissions";
 import {
 	revokeAll,
 	type Settings,
@@ -26,7 +26,7 @@ export function WalletTab({ wallet, settings, onChange }: Props) {
 	}
 
 	async function revoke() {
-		await revokeAll();
+		await Promise.all([revokeAll(), removeAllSiteAccess()]);
 		onChange();
 	}
 

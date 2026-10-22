@@ -8,7 +8,8 @@ export type ActiveTab = {
 };
 
 // Serialized and run in the page, so it must not reference anything outside itself.
-function collect(): PageRaw {
+// The checkout content script also calls it directly.
+export function collect(): PageRaw {
 	const jsonLd = Array.from(
 		document.querySelectorAll('script[type="application/ld+json"]'),
 		(el) => el.textContent ?? "",
