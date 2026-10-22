@@ -1,36 +1,62 @@
-import { useState } from "react";
-import reactLogo from "@/assets/react.svg";
-import wxtLogo from "/wxt.svg";
+import { useEffect, useState } from "react";
 
-import "./App.css";
+import { getSettings, getWallet, type Settings } from "@/lib/storage";
 
-function App() {
-	const [count, setCount] = useState(0);
+import { PageTab } from "./PageTab";
+import { WalletTab } from "./WalletTab";
+
+type Tab = "page" | "wallet";
+
+export default function App() {
+	const [tab, setTab] = useState<Tab>("page");
+	const [wallet, setWalletState] = useState<
+		Awaited<ReturnType<typeof getWallet>>
+	>([]);
+	const [settings, setSettingsState] = useState<Settings | null>(null);
+
+	async function reload() {
+		const [nextWallet, nextSettings] = await Promise.all([
+			getWallet(),
+			getSettings(),
+		]);
+		setWalletState(nextWallet);
+		setSettingsState(nextSettings);
+		if (nextWallet.length === 0) setTab("wallet");
+	}
+
+	useEffect(() => {
+		reload();
+	}, []);
+
+	if (!settings) return null;
 
 	return (
-		<>
-			<div>
-				<a href="https://wxt.dev" target="_blank" rel="noopener">
-					<img src={wxtLogo} className="logo" alt="WXT logo" />
-				</a>
-				<a href="https://react.dev" target="_blank" rel="noopener">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-			</div>
-			<h1>WXT + React</h1>
-			<div className="card">
-				<button onClick={() => setCount((count) => count + 1)}>
-					count is {count}
+		<main>
+			<header>
+				<h1>Cardmax</h1>
+				<span className="badge">Runs on this device</span>
+			</header>
+			<nav>
+				<button
+					type="button"
+					aria-pressed={tab === "page"}
+					onClick={() => setTab("page")}
+				>
+					This page
 				</button>
-				<p>
-					Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
-			<p className="read-the-docs">
-				Click on the WXT and React logos to learn more
-			</p>
-		</>
+				<button
+					type="button"
+					aria-pressed={tab === "wallet"}
+					onClick={() => setTab("wallet")}
+				>
+					Wallet ({wallet.length})
+				</button>
+			</nav>
+			{tab === "page" ? (
+				<PageTab wallet={wallet} settings={settings} onChange={reload} />
+			) : (
+				<WalletTab wallet={wallet} settings={settings} onChange={reload} />
+			)}
+		</main>
 	);
 }
-
-export default App;
