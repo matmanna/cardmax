@@ -4,6 +4,7 @@ import { protectedProcedure, publicProcedure } from "../index";
 import { catalogRouter } from "./catalog";
 import { deviceRouter } from "./device";
 import { listingsRouter } from "./listings";
+import { phoneRouter } from "./phone";
 import { walletRouter } from "./wallet";
 
 export const appRouter = {
@@ -20,6 +21,7 @@ export const appRouter = {
 	listings: listingsRouter,
 	catalog: catalogRouter,
 	device: deviceRouter,
+	phone: phoneRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

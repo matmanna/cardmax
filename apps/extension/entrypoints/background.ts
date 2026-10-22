@@ -48,7 +48,7 @@ async function handle(
 			const { sendsEnabled } = await getSettings();
 			if (!sendsEnabled) return { error: "Sync is turned off on this device" };
 			await connect(parsed.data.token, parsed.data.email);
-			log("connected to", parsed.data.email);
+			log("connected");
 			return { ok: true };
 		}
 		case "cardmax:disconnect":
