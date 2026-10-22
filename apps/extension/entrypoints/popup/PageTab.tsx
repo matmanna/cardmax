@@ -33,6 +33,14 @@ type Lookup =
 	| { state: "done"; results: RankedListing[] }
 	| { state: "error"; message: string };
 
+const checkoutNames = {
+	shopify: "Shopify",
+	stripe: "Stripe",
+	google_pay: "Google Pay",
+	paypal: "PayPal",
+	square: "Square",
+} as const;
+
 const cardName = new Map(
 	catalog.map((card) => [card.id, `${card.issuer} ${card.name}`]),
 );
@@ -117,7 +125,11 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 		<section>
 			<div className="merchant">
 				<span className="domain">
-					<code>{merchant.domain}</code>
+					{merchant.label ? (
+						<strong>{merchant.label}</strong>
+					) : (
+						<code>{merchant.domain}</code>
+					)}
 					<span
 						className={`dot ${merchant.confidence}`}
 						title={`${merchant.confidence} confidence`}
@@ -138,6 +150,13 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 					</select>
 				</label>
 			</div>
+
+			{merchant.via && (
+				<p className="via">
+					Checkout by {checkoutNames[merchant.via]} · low confidence, check the
+					category
+				</p>
+			)}
 
 			{best ? (
 				<>

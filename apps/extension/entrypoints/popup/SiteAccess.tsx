@@ -30,7 +30,9 @@ export function SiteAccess({ origin, domain }: Props) {
 		<div className="site-access">
 			<span>
 				{on ? `Automatic on ${domain}` : `Suggest automatically on ${domain}`}
-				{on && <small>Opens by itself at checkout here. Nothing is sent.</small>}
+				{on && (
+					<small>Opens by itself at checkout here. Nothing is sent.</small>
+				)}
 			</span>
 			<button
 				type="button"
