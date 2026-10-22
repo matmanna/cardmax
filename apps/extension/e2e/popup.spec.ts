@@ -327,7 +327,7 @@ async function openedFlag(serviceWorker: Worker, url: string) {
 		const tabs = await chrome.tabs.query({});
 		const tab = tabs.find((t) => t.url === tabUrl);
 		if (tab?.id === undefined) return false;
-		const key = `opened:${tab.id}`;
+		const key = `opened:${tab.id}:checkout`;
 		return Boolean((await chrome.storage.session.get(key))[key]);
 	}, url);
 }

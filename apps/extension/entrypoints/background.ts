@@ -2,13 +2,13 @@ import {
 	catalog,
 	extensionMessage,
 	guessMerchant,
+	type PageRaw,
 	parseProduct,
 	recommend,
 	type WalletCard,
 } from "@cardmax/core";
-import { z } from "zod";
 
-import { pageSignals } from "@/lib/page";
+import { collect, pageSignals } from "@/lib/page";
 import { getSettings, getWallet, setWallet } from "@/lib/storage";
 
 // Same fallback as externally_connectable in wxt.config.ts.
@@ -42,53 +42,47 @@ async function handle(
 
 /* Automatic suggestions on sites the user turned on ----------------------- */
 
-const checkoutScriptId = "cardmax-checkout";
-
-// The checkout script runs only on origins the user granted from the popup.
-async function syncCheckoutScript(): Promise<void> {
-	const { origins = [] } = await browser.permissions.getAll();
-	const matches = origins.filter((origin) => origin !== "https://*/*");
-	const registered = await browser.scripting.getRegisteredContentScripts({
-		ids: [checkoutScriptId],
-	});
-	if (registered.length) {
-		await browser.scripting.unregisterContentScripts({
-			ids: [checkoutScriptId],
-		});
-	}
-	if (!matches.length) return;
-	await browser.scripting.registerContentScripts([
-		{
-			id: checkoutScriptId,
-			matches,
-			js: ["content-scripts/checkout.js"],
-			runAt: "document_idle",
-		},
-	]);
+// Which checkout stage a URL is at, if any. Amazon's checkout lives under /gp/buy/.
+function checkoutStage(url: string): "cart" | "checkout" | null {
+	const { pathname } = new URL(url);
+	if (/(checkout|payment|\/gp\/buy\/)/i.test(pathname)) return "checkout";
+	if (/(cart|basket|bag)/i.test(pathname)) return "cart";
+	return null;
 }
 
-const checkoutMessage = z.object({
-	type: z.literal("cardmax:checkout"),
-	raw: z.object({
-		jsonLd: z.array(z.string()),
-		meta: z.record(z.string(), z.string()),
-		title: z.string(),
-	}),
-});
+// Watches tab URLs, which includes in-page navigations (Best Buy goes from
+// cart to checkout with pushState). Chrome only reports URLs for sites the
+// user granted, so nothing else is visible here.
+async function onTabUrl(tab: Browser.tabs.Tab): Promise<void> {
+	if (tab.id === undefined || !tab.url?.startsWith("https:")) return;
+	const stage = checkoutStage(tab.url);
+	if (!stage) {
+		await browser.action.setBadgeText({ tabId: tab.id, text: "" });
+		return;
+	}
+	const origin = new URL(tab.url).origin;
+	if (!(await browser.permissions.contains({ origins: [`${origin}/*`] }))) {
+		return;
+	}
+	const [result] = await browser.scripting.executeScript({
+		target: { tabId: tab.id },
+		func: collect,
+	});
+	if (!result?.result) return;
+	await suggest(tab.id, tab.windowId, tab.url, stage, result.result);
+}
 
 // Shows the best card as a toolbar badge. Nothing leaves the device.
 async function suggest(
-	message: unknown,
-	sender: Browser.runtime.MessageSender,
+	tabId: number,
+	windowId: number,
+	url: string,
+	stage: "cart" | "checkout",
+	raw: PageRaw,
 ): Promise<void> {
-	const parsed = checkoutMessage.safeParse(message);
-	const tabId = sender.tab?.id;
-	if (!parsed.success || tabId === undefined || !sender.url) return;
-
-	const { raw } = parsed.data;
 	const [wallet, settings] = await Promise.all([getWallet(), getSettings()]);
 	const merchant = guessMerchant(
-		new URL(sender.url).hostname,
+		new URL(url).hostname,
 		pageSignals(raw),
 		settings.overrides,
 	);
@@ -116,18 +110,22 @@ async function suggest(
 		tabId,
 		title: `Use ${card.issuer} ${card.name} · ${best.reason}`,
 	});
-	await openOncePerTab(tabId, sender.tab?.windowId);
+	await openOncePerStage(tabId, windowId, stage);
 }
 
-// Opens the popup the first time a tab reaches checkout, so it doesn't nag on
-// every step. Chrome refuses when the window isn't focused; the badge stays.
-async function openOncePerTab(tabId: number, windowId?: number) {
-	const key = `opened:${tabId}`;
+// Opens the popup once at the cart and once at checkout in each tab, not on
+// every step. The browser refuses when the window isn't focused; the badge stays.
+async function openOncePerStage(
+	tabId: number,
+	windowId: number,
+	stage: "cart" | "checkout",
+) {
+	const key = `opened:${tabId}:${stage}`;
 	const seen = await browser.storage.session.get(key);
 	if (seen[key]) return;
 	await browser.storage.session.set({ [key]: true });
 	try {
-		await browser.action.openPopup(windowId ? { windowId } : undefined);
+		await browser.action.openPopup({ windowId });
 	} catch {
 		// Not focused, or the browser doesn't allow it. The badge is enough.
 	}
@@ -144,23 +142,15 @@ export default defineBackground(() => {
 		},
 	);
 
-	// Only the extension's own content script may send this.
-	browser.runtime.onMessage.addListener((message, sender) => {
-		if (sender.id !== browser.runtime.id) return;
-		suggest(message, sender).catch(() => {});
+	// A URL change (load or pushState) or a finished load on a granted site.
+	browser.tabs.onUpdated.addListener((_tabId, info, tab) => {
+		if (!info.url && info.status !== "complete") return;
+		onTabUrl(tab).catch(() => {});
 	});
 
 	browser.tabs.onRemoved.addListener((tabId) => {
-		browser.storage.session.remove(`opened:${tabId}`).catch(() => {});
-	});
-
-	browser.runtime.onInstalled.addListener(() => {
-		syncCheckoutScript().catch(() => {});
-	});
-	browser.permissions.onAdded.addListener(() => {
-		syncCheckoutScript().catch(() => {});
-	});
-	browser.permissions.onRemoved.addListener(() => {
-		syncCheckoutScript().catch(() => {});
+		browser.storage.session
+			.remove([`opened:${tabId}:cart`, `opened:${tabId}:checkout`])
+			.catch(() => {});
 	});
 });
