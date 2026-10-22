@@ -22,16 +22,22 @@ export const walletCard = z.object({
 export type WalletCard = z.infer<typeof walletCard>;
 
 // One earn rule for one card. Every rule needs a source URL and a check date.
+// A rule with onlyMerchants applies to those domains whatever the category.
+// capUsd is an annual cap; we never track spend, so it is only shown as a caveat.
 export const earnRule = z.object({
 	category,
 	multiplier: z.number().nonnegative(),
 	capUsd: z.number().positive().optional(),
 	excludesMerchants: z.array(z.string()).default([]),
+	onlyMerchants: z.array(z.string()).optional(),
 });
+export type EarnRule = z.infer<typeof earnRule>;
 
 export const cardProduct = z.object({
 	id: z.string(),
 	issuer: z.string(),
+	// Cash back is always worth 1 cent per unit; points use the user's valuation.
+	rewardCurrency: z.enum(["cash", "points"]),
 	name: z.string(),
 	annualFeeUsd: z.number().nonnegative(),
 	baseMultiplier: z.number().nonnegative(),
