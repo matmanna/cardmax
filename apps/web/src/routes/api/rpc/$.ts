@@ -33,9 +33,7 @@ const rpcHandler = new RPCHandler(appRouter, {
 			credentials: false,
 		}),
 	],
-	interceptors: [
-		onError(logError),
-	],
+	interceptors: [onError(logError)],
 });
 
 const apiHandler = new OpenAPIHandler(appRouter, {
@@ -44,9 +42,7 @@ const apiHandler = new OpenAPIHandler(appRouter, {
 			schemaConverters: [new ZodToJsonSchemaConverter()],
 		}),
 	],
-	interceptors: [
-		onError(logError),
-	],
+	interceptors: [onError(logError)],
 });
 
 async function handle({ request }: { request: Request }) {
