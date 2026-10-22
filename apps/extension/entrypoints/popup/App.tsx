@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { getSettings, getWallet, type Settings } from "@/lib/storage";
 
+import { Mark } from "./Mark";
 import { PageTab } from "./PageTab";
 import { WalletTab } from "./WalletTab";
 
@@ -33,7 +34,10 @@ export default function App() {
 	return (
 		<main>
 			<header>
-				<h1>Cardmax</h1>
+				<h1>
+					<Mark />
+					Cardmax
+				</h1>
 				<nav>
 					<button
 						type="button"

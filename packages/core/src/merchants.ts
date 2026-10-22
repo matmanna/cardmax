@@ -337,3 +337,11 @@ export function guessMerchant(
 		source: "page_heuristic",
 	};
 }
+
+// Stores Cardmax knows well enough to open by itself at checkout. One Chrome
+// prompt grants all of them; "*." also matches the bare domain.
+export const supportedStoreDomains = Object.keys(merchantMap);
+
+export const supportedStoreOrigins = supportedStoreDomains.map(
+	(domain) => `https://*.${domain}/*`,
+);
