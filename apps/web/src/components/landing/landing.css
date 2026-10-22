@@ -16,6 +16,8 @@
 	--lp-mono: "Geist Mono Variable", ui-monospace, monospace;
 	--lp-gutter: clamp(16px, 6vw, 96px);
 	--lp-max: 1200px;
+	--lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+	--lp-edge: rgb(11 27 43 / 0.14);
 
 	background: var(--lp-bg);
 	color: var(--lp-fg);
@@ -801,59 +803,91 @@
 }
 
 .lp-steps li {
-	position: relative;
-	border-top: 1px solid var(--lp-border);
-}
-
-.lp-steps li:last-child {
-	border-bottom: 1px solid var(--lp-border);
-}
-
-.lp-steps li[data-active] {
-	border-top-color: var(--lp-fg);
-}
-
-.lp-steps li button {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+}
+
+/* Each step is a card; hairline edges with a gliding beam join them. */
+.lp-step-card {
+	position: relative;
+	overflow: hidden;
+	border: 1px solid var(--lp-border);
+	border-radius: 16px;
+	background: var(--lp-bg);
+	transition:
+		transform 300ms var(--lp-ease),
+		box-shadow 300ms var(--lp-ease),
+		border-color 300ms var(--lp-ease);
+}
+
+.lp-step-card:hover {
+	transform: translateY(-2px);
+}
+
+.lp-steps li[data-active] .lp-step-card {
+	border-color: color-mix(in srgb, var(--lp-primary) 40%, transparent);
+	box-shadow: 0 8px 24px rgb(11 27 43 / 0.06);
+}
+
+.lp-step-card button {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
 	width: 100%;
-	padding: 18px 0;
+	padding: 16px;
 	border: 0;
 	background: none;
 	text-align: left;
+	transition: transform 150ms var(--lp-ease);
+}
+
+.lp-step-card button:active {
+	transform: scale(0.985);
+}
+
+.lp-step-num {
+	display: inline-grid;
+	flex-shrink: 0;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 999px;
+	background: var(--lp-surface);
+	color: var(--lp-muted);
+	font: 600 14px / 1 var(--lp-sans);
+	font-variant-numeric: tabular-nums;
+	transition:
+		background-color 300ms ease,
+		color 300ms ease;
+}
+
+.lp-steps li[data-active] .lp-step-num {
+	background: var(--lp-primary);
+	color: #ffffff;
+}
+
+.lp-step-text {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding-top: 4px;
 }
 
 .lp-step-title {
-	display: flex;
-	gap: 14px;
-	font-size: 18px;
+	font-size: 17px;
 	line-height: 24px;
 	font-weight: 500;
-	color: var(--lp-faint);
+	color: var(--lp-muted);
 	transition: color 200ms ease;
 }
 
-.lp-steps li[data-active] .lp-step-title {
+.lp-steps li[data-active] .lp-step-title,
+.lp-step-card button:hover .lp-step-title {
 	color: var(--lp-fg);
 	font-weight: 600;
 }
 
-.lp-steps li button:hover .lp-step-title {
-	color: var(--lp-fg);
-}
-
-.lp-step-num {
-	font: 13px / 26px var(--lp-mono);
-	color: inherit;
-}
-
-.lp-steps li[data-active] .lp-step-num {
-	color: var(--lp-primary);
-}
-
 .lp-step-body {
-	padding-left: 34px;
 	font-size: 15px;
 	line-height: 22px;
 	color: var(--lp-muted);
@@ -862,9 +896,9 @@
 
 .lp-step-bar {
 	position: absolute;
-	top: -1px;
+	bottom: 0;
 	left: 0;
-	height: 2px;
+	height: 3px;
 	width: 100%;
 	background: var(--lp-primary);
 }
@@ -874,6 +908,60 @@
 	animation-name: lp-fill;
 	animation-timing-function: linear;
 	animation-fill-mode: forwards;
+}
+
+.lp-step-edge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 32px;
+	height: 44px;
+	margin-left: 16px;
+}
+
+.lp-port {
+	position: relative;
+	z-index: 1;
+	flex-shrink: 0;
+	width: 9px;
+	height: 9px;
+	border-radius: 999px;
+	background: var(--lp-bg);
+	box-shadow:
+		0 0 0 1.5px var(--lp-edge),
+		0 1px 2px rgb(11 27 43 / 0.08);
+}
+
+.lp-edge {
+	position: relative;
+	flex: 1;
+	width: 2px;
+	margin-block: -2px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: var(--lp-edge);
+}
+
+.lp-edge > i {
+	position: absolute;
+	inset: 0;
+	height: 45%;
+	border-radius: inherit;
+	background: var(--lp-primary);
+	opacity: 0.85;
+	transform: translateY(-100%);
+	animation: lp-beam 2.4s cubic-bezier(0.45, 0, 0.35, 1) var(--bd, 0s) infinite;
+}
+
+@keyframes lp-beam {
+	0% {
+		transform: translateY(-100%);
+	}
+
+	70%,
+	100% {
+		transform: translateY(225%);
+	}
 }
 
 .lp-device {
@@ -1189,6 +1277,24 @@
 	font: 16px / 26px var(--lp-mono);
 }
 
+.lp-ai {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-top: 64px;
+}
+
+.lp-ai h3 {
+	font-size: 22px;
+	line-height: 28px;
+}
+
+.lp-ai > p {
+	max-width: 560px;
+	margin-bottom: 16px;
+	color: var(--lp-muted);
+}
+
 /* Closing */
 
 .lp-closing-row {
@@ -1304,5 +1410,14 @@
 
 	.lp-step-bar {
 		width: 100%;
+	}
+
+	.lp-edge > i {
+		display: none;
+	}
+
+	.lp-step-card:hover,
+	.lp-step-card button:active {
+		transform: none;
 	}
 }
