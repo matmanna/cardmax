@@ -9,16 +9,17 @@ export type PageRaw = {
 
 export type Product = { title: string; upc?: string; priceUsd?: number };
 
-type Node = Record<string, unknown>;
+export type JsonLdNode = Record<string, unknown>;
 
-function nodes(value: unknown): Node[] {
-	if (Array.isArray(value)) return value.flatMap(nodes);
+// Flattens arrays and @graph, the two ways pages bundle several JSON-LD nodes.
+export function jsonLdNodes(value: unknown): JsonLdNode[] {
+	if (Array.isArray(value)) return value.flatMap(jsonLdNodes);
 	if (!value || typeof value !== "object") return [];
-	const node = value as Node;
-	return [node, ...nodes(node["@graph"])];
+	const node = value as JsonLdNode;
+	return [node, ...jsonLdNodes(node["@graph"])];
 }
 
-function isProduct(node: Node): boolean {
+function isProduct(node: JsonLdNode): boolean {
 	const type = node["@type"];
 	return Array.isArray(type) ? type.includes("Product") : type === "Product";
 }
@@ -29,7 +30,7 @@ function toPrice(value: unknown): number | undefined {
 	return Number.isFinite(price) && price > 0 ? price : undefined;
 }
 
-function toGtin(node: Node): string | undefined {
+function toGtin(node: JsonLdNode): string | undefined {
 	for (const key of ["gtin12", "gtin13", "gtin14", "gtin8", "gtin", "upc"]) {
 		const digits = String(node[key] ?? "").replace(/\D/g, "");
 		if (digits.length >= 8 && digits.length <= 14) return digits;
@@ -38,7 +39,7 @@ function toGtin(node: Node): string | undefined {
 }
 
 function offerPrice(offers: unknown): number | undefined {
-	for (const offer of nodes(offers)) {
+	for (const offer of jsonLdNodes(offers)) {
 		const price = toPrice(offer.price ?? offer.lowPrice);
 		if (price) return price;
 	}
@@ -53,7 +54,7 @@ export function parseProduct(raw: PageRaw): Product | null {
 		} catch {
 			continue;
 		}
-		const product = nodes(parsed).find(isProduct);
+		const product = jsonLdNodes(parsed).find(isProduct);
 		if (product && typeof product.name === "string") {
 			return {
 				title: product.name,

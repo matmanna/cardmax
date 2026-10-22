@@ -1,4 +1,5 @@
 import type { Category, MerchantGuess } from "./schema";
+import type { PageSignals } from "./signals";
 
 // How common US merchants usually code. Issuers decide the real code at charge
 // time, so even curated entries are a guess the user can override.
@@ -47,8 +48,6 @@ const hints: [Category, RegExp][] = [
 	["streaming", /\b(streaming|subscribe to watch)\b/i],
 	["online_retail", /\b(add to cart|add to bag|checkout)\b/i],
 ];
-
-export type PageSignals = { title?: string; description?: string };
 
 export function normalizeDomain(hostname: string): string {
 	const labels = hostname.toLowerCase().replace(/\.$/, "").split(".");
