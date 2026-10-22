@@ -161,6 +161,13 @@ const productTypes = new Set([
 	"AggregateOffer",
 ]);
 
+// Cart words describe the checkout flow, not the merchant, so they are skipped
+// on third-party checkout hosts.
+const cartHint: [Category, RegExp] = [
+	"online_retail",
+	/\b(add to cart|add to bag|checkout|place order|order summary|shipping address)\b/i,
+];
+
 // Keyword hints over the page text, used only when nothing structured matched.
 const hints: [Category, RegExp][] = [
 	["dining", /\b(restaurant|menu|takeout|delivery|diner|cafe|pizza)\b/i],
@@ -169,10 +176,7 @@ const hints: [Category, RegExp][] = [
 	["travel", /\b(flights?|hotels?|airline|booking|resort)\b/i],
 	["gas", /\b(fuel|gas station)\b/i],
 	["streaming", /\b(streaming|subscribe to watch)\b/i],
-	[
-		"online_retail",
-		/\b(add to cart|add to bag|checkout|place order|order summary|shipping address)\b/i,
-	],
+	cartHint,
 ];
 
 function categoryFromStructuredData(
@@ -189,9 +193,51 @@ function categoryFromStructuredData(
 	return undefined;
 }
 
-function categoryFromKeywords(signals: PageSignals = {}): Category | undefined {
+function categoryFromKeywords(
+	signals: PageSignals = {},
+	candidates = hints,
+): Category | undefined {
 	const text = [signals.title, signals.description, signals.siteName].join(" ");
-	return hints.find(([, pattern]) => pattern.test(text))?.[0];
+	return candidates.find(([, pattern]) => pattern.test(text))?.[0];
+}
+
+type Via = NonNullable<MerchantGuess["via"]>;
+
+// Third-party checkout and payment hosts. The page belongs to some other merchant.
+function checkoutVia(hostname: string): Via | undefined {
+	const host = hostname.toLowerCase().replace(/\.$/, "");
+	if (host === "checkout.shopify.com" || host.endsWith(".myshopify.com"))
+		return "shopify";
+	if (host === "checkout.stripe.com" || host === "buy.stripe.com")
+		return "stripe";
+	if (host === "pay.google.com") return "google_pay";
+	if (host === "paypal.com" || host.endsWith(".paypal.com")) return "paypal";
+	if (
+		host === "checkout.square.site" ||
+		host === "checkout.squareup.com" ||
+		host === "square.link"
+	)
+		return "square";
+	return undefined;
+}
+
+// Words that name the checkout flow or the payment host rather than the merchant.
+const notMerchant =
+	/\b(checkout|check out|payment|pay|cart|order|shopify|stripe|paypal|google|square)\b/i;
+
+function merchantLabel(signals: PageSignals = {}): string | undefined {
+	const titleParts = (signals.title ?? "").split(
+		/\s+[|\-\u2013\u2014\u00b7:]\s+/,
+	);
+	const candidates = [
+		signals.siteName,
+		signals.seller,
+		signals.brand,
+		...titleParts,
+	];
+	return candidates
+		.map((name) => name?.trim())
+		.find((name) => name && !notMerchant.test(name));
 }
 
 // Common multi-part public suffixes. Not the full Public Suffix List, just
@@ -253,6 +299,25 @@ export function guessMerchant(
 	const curated = merchantMap[domain];
 	if (curated) {
 		return { domain, category: curated, confidence: "high", source: "curated" };
+	}
+
+	// Low confidence: we only know the merchant from what its checkout page says.
+	const via = checkoutVia(hostname);
+	if (via) {
+		const label = merchantLabel(signals);
+		const inner = categoryFromStructuredData(signals);
+		const keyword = categoryFromKeywords(
+			signals,
+			hints.filter((hint) => hint !== cartHint),
+		);
+		return {
+			domain,
+			category: inner ?? keyword ?? "other",
+			confidence: "low",
+			source: inner ? "structured_data" : "page_heuristic",
+			...(label && { label }),
+			via,
+		};
 	}
 
 	const structured = categoryFromStructuredData(signals);
