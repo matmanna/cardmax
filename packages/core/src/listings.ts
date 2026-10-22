@@ -2,6 +2,7 @@ import { guessMerchant } from "./merchants";
 import { recommend } from "./recommend";
 import type {
 	CardProduct,
+	Category,
 	Listing,
 	Recommendation,
 	WalletCard,
@@ -19,10 +20,11 @@ export function rankListings(
 	wallet: WalletCard[],
 	catalog: CardProduct[],
 	centsPerPoint = 1,
+	overrides: Record<string, Category> = {},
 ): RankedListing[] {
 	return listings
 		.map((listing) => {
-			const merchant = guessMerchant(listing.domain);
+			const merchant = guessMerchant(listing.domain, undefined, overrides);
 			const [best] = recommend(
 				wallet,
 				catalog,

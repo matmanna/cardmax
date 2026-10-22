@@ -53,3 +53,19 @@ test("ranks by price minus the best card's reward", () => {
 	expect(ranked[0]?.best?.cardId).toBe("store-5");
 	expect(ranked[1]?.netPriceUsd).toBe(99);
 });
+
+test("applies the user's category overrides to listings", () => {
+	const grocer: CardProduct = {
+		...catalog[0],
+		id: "grocer-3",
+		rules: [{ category: "grocery", multiplier: 3, excludesMerchants: [] }],
+	} as CardProduct;
+	const wallet = [{ cardId: "grocer-3", addedAt: "2026-10-22T00:00:00Z" }];
+	const bestBuy = (overrides?: Record<string, "grocery">) =>
+		rankListings(listings, wallet, [grocer], 1, overrides).find(
+			(r) => r.listing.merchant === "bestbuy",
+		)?.best?.multiplier;
+
+	expect(bestBuy()).toBe(1);
+	expect(bestBuy({ "bestbuy.com": "grocery" })).toBe(3);
+});

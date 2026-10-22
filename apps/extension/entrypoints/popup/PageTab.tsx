@@ -4,7 +4,6 @@ import {
 	category,
 	guessMerchant,
 	type ListingQuery,
-	type MerchantGuess,
 	type Product,
 	parseProduct,
 	type RankedListing,
@@ -16,7 +15,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { listingsEndpoint, searchListings } from "@/lib/api";
-import { pageSignals, readActiveTab } from "@/lib/page";
+import { type ActiveTab, pageSignals, readActiveTab } from "@/lib/page";
 import { type Settings, setOverride } from "@/lib/storage";
 
 type Props = {
@@ -39,26 +38,27 @@ function usd(value: number) {
 }
 
 export function PageTab({ wallet, settings, onChange }: Props) {
-	const [hostname, setHostname] = useState<string | null>(null);
-	const [merchant, setMerchant] = useState<MerchantGuess | null>(null);
+	const [page, setPage] = useState<ActiveTab | null>(null);
 	const [product, setProduct] = useState<Product | null>(null);
 	const [amount, setAmount] = useState(100);
 	const [lookup, setLookup] = useState<Lookup>({ state: "idle" });
 
+	// Read the tab once; overrides change the merchant guess during render.
 	useEffect(() => {
-		readActiveTab().then((page) => {
-			if (!page) return;
-			const parsed = parseProduct(page.raw);
-			setHostname(page.hostname);
+		readActiveTab().then((tab) => {
+			if (!tab) return;
+			const parsed = parseProduct(tab.raw);
+			setPage(tab);
 			setProduct(parsed);
 			if (parsed?.priceUsd) setAmount(parsed.priceUsd);
-			setMerchant(
-				guessMerchant(page.hostname, pageSignals(page.raw), settings.overrides),
-			);
 		});
-	}, [settings.overrides]);
+	}, []);
 
-	if (!hostname || !merchant) {
+	const merchant = page
+		? guessMerchant(page.hostname, pageSignals(page.raw), settings.overrides)
+		: null;
+
+	if (!merchant) {
 		return (
 			<section>
 				<p className="muted">Open a store page to get a card suggestion.</p>
@@ -92,6 +92,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 					wallet,
 					catalog,
 					settings.centsPerPoint,
+					settings.overrides,
 				),
 			});
 		} catch (error) {
