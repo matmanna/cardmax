@@ -13,6 +13,7 @@
 			"!**/dist",
 			"!**/.output",
 			"!**/.wxt",
+			"!.claude",
 			"!**/.turbo",
 			"!**/.nx",
 			"!**/dev-dist",

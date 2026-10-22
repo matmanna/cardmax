@@ -1,51 +1,43 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { orpc } from "@/utils/orpc";
+import {
+	Closing,
+	Footer,
+	Hero,
+	HowItWorks,
+	Issuers,
+	Nav,
+	PrivacyFaq,
+	TextAgent,
+} from "@/components/landing/sections";
 
 export const Route = createFileRoute("/")({
-	component: HomeComponent,
+	head: () => ({
+		meta: [
+			{ title: "Cardmax: the right card, every checkout" },
+			{
+				name: "description",
+				content:
+					"Cardmax picks the card in your wallet that pays most at the store you're on. It runs on your device.",
+			},
+		],
+	}),
+	component: Landing,
 });
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
-function HomeComponent() {
-	const healthCheck = useQuery(orpc.healthCheck.queryOptions());
-
+function Landing() {
 	return (
-		<div className="container mx-auto max-w-3xl px-4 py-2">
-			<pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-			<div className="grid gap-6">
-				<section className="rounded-lg border p-4">
-					<h2 className="mb-2 font-medium">API Status</h2>
-					<div className="flex items-center gap-2">
-						<div
-							className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-						/>
-						<span className="text-muted-foreground text-sm">
-							{healthCheck.isLoading
-								? "Checking..."
-								: healthCheck.data
-									? "Connected"
-									: "Disconnected"}
-						</span>
-					</div>
-				</section>
-			</div>
+		<div className="lp">
+			<Nav />
+			<main>
+				<Hero />
+				<Issuers />
+				<HowItWorks />
+				<PrivacyFaq />
+				<TextAgent />
+				<Closing />
+			</main>
+			<Footer />
 		</div>
 	);
 }

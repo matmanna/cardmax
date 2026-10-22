@@ -6,6 +6,7 @@ import {
 	HeadContent,
 	Outlet,
 	Scripts,
+	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
@@ -30,7 +31,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "My App",
+				title: "Cardmax",
 			},
 		],
 		links: [
@@ -45,16 +46,25 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
+	// The landing page brings its own light layout and nav.
+	const isLanding = useRouterState({
+		select: (state) => state.location.pathname === "/",
+	});
+
 	return (
-		<html lang="en" className="dark">
+		<html lang="en" className={isLanding ? undefined : "dark"}>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
-				<div className="grid h-svh grid-rows-[auto_1fr]">
-					<Header />
+				{isLanding ? (
 					<Outlet />
-				</div>
+				) : (
+					<div className="grid h-svh grid-rows-[auto_1fr]">
+						<Header />
+						<Outlet />
+					</div>
+				)}
 				<Toaster richColors />
 				<TanStackRouterDevtools position="bottom-left" />
 				<ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
