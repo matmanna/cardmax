@@ -1,9 +1,9 @@
 import {
+	catalog as bundledCards,
+	merchantMap as bundledMerchants,
 	type CardProduct,
 	type Category,
 	catalogResponse,
-	catalog as bundledCards,
-	merchantMap as bundledMerchants,
 } from "@cardmax/core";
 import { z } from "zod";
 
@@ -42,7 +42,11 @@ export async function refreshCatalog(force = false): Promise<void> {
 	if (!apiConfigured) return;
 	const { catalog: stored } = await browser.storage.local.get("catalog");
 	const parsed = cached.safeParse(stored);
-	if (!force && parsed.success && Date.now() - parsed.data.fetchedAt < staleAfterMs) {
+	if (
+		!force &&
+		parsed.success &&
+		Date.now() - parsed.data.fetchedAt < staleAfterMs
+	) {
 		return;
 	}
 	const data = await fetchCatalog();

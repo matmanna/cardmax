@@ -1,4 +1,5 @@
 import { type PageRaw, type PageSignals, signalsFromPage } from "@cardmax/core";
+import { z } from "zod";
 
 export type ActiveTab = {
 	tabId: number;
@@ -42,9 +43,30 @@ async function targetTab(): Promise<Browser.tabs.Tab | undefined> {
 	return tab;
 }
 
+// What the background read at checkout, for when the popup can't read the page.
+const savedContext = z.object({
+	url: z.string(),
+	raw: z.object({
+		jsonLd: z.array(z.string()),
+		meta: z.record(z.string(), z.string()),
+		title: z.string(),
+	}),
+});
+
+async function fromBackground(tabId: number): Promise<ActiveTab | null> {
+	const key = `context:${tabId}`;
+	const parsed = savedContext.safeParse(
+		(await browser.storage.session.get(key))[key],
+	);
+	if (!parsed.success) return null;
+	const { url, raw } = parsed.data;
+	return { tabId, url, hostname: new URL(url).hostname, raw };
+}
+
 export async function readActiveTab(): Promise<ActiveTab | null> {
 	const tab = await targetTab();
-	if (tab?.id === undefined || !tab.url) return null;
+	if (tab?.id === undefined) return null;
+	if (!tab.url) return fromBackground(tab.id);
 	const url = new URL(tab.url);
 	if (url.protocol !== "http:" && url.protocol !== "https:") return null;
 	try {
@@ -52,7 +74,7 @@ export async function readActiveTab(): Promise<ActiveTab | null> {
 			target: { tabId: tab.id },
 			func: collect,
 		});
-		if (!result?.result) return null;
+		if (!result?.result) return fromBackground(tab.id);
 		return {
 			tabId: tab.id,
 			url: tab.url,
@@ -60,7 +82,7 @@ export async function readActiveTab(): Promise<ActiveTab | null> {
 			raw: result.result,
 		};
 	} catch {
-		return null;
+		return fromBackground(tab.id);
 	}
 }
 

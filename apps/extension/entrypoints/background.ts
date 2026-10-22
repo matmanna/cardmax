@@ -101,6 +101,11 @@ async function onTabUrl(tab: Browser.tabs.Tab): Promise<void> {
 		log("could not read the page");
 		return;
 	}
+	// The popup reads this when it opens by itself, since an auto-opened popup
+	// gets no activeTab grant to read the page on its own.
+	await browser.storage.session.set({
+		[`context:${tab.id}`]: { url: tab.url, raw: result.result },
+	});
 	await suggest(tab.id, tab.windowId, tab.url, stage, result.result);
 }
 
@@ -121,7 +126,10 @@ async function suggest(
 		// Nothing to suggest yet, so open the popup on its Wallet tab instead.
 		log("wallet is empty, opening the popup to add cards");
 		await browser.action.setBadgeText({ tabId, text: "+" });
-		await browser.action.setTitle({ tabId, title: "Add your cards to Cardmax" });
+		await browser.action.setTitle({
+			tabId,
+			title: "Add your cards to Cardmax",
+		});
 		await openOncePerStage(tabId, windowId, stage);
 		return;
 	}
@@ -201,11 +209,14 @@ export default defineBackground(() => {
 
 	// Account sync and the public catalog, on start and whenever the popup asks.
 	const refresh = () =>
-		Promise.allSettled([refreshCatalog(), pullFromAccount()]).then((results) => {
-			for (const result of results) {
-				if (result.status === "rejected") log("sync failed:", String(result.reason));
-			}
-		});
+		Promise.allSettled([refreshCatalog(), pullFromAccount()]).then(
+			(results) => {
+				for (const result of results) {
+					if (result.status === "rejected")
+						log("sync failed:", String(result.reason));
+				}
+			},
+		);
 	refresh();
 
 	// The popup and nothing else may ask for a pull.
@@ -231,7 +242,11 @@ export default defineBackground(() => {
 
 	browser.tabs.onRemoved.addListener((tabId) => {
 		browser.storage.session
-			.remove([`opened:${tabId}:cart`, `opened:${tabId}:checkout`])
+			.remove([
+				`opened:${tabId}:cart`,
+				`opened:${tabId}:checkout`,
+				`context:${tabId}`,
+			])
 			.catch(() => {});
 	});
 });

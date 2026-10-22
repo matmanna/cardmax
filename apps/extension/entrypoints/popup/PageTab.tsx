@@ -42,8 +42,6 @@ const checkoutNames = {
 	square: "Square",
 } as const;
 
-
-
 function usd(value: number) {
 	return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }

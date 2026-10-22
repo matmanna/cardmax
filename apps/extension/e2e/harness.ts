@@ -66,7 +66,9 @@ export const mockListings = [
 export const pulledCardName = "Active Cash (from the API)";
 export const mockCatalog = {
 	cards: catalog.map((card) =>
-		card.id === "wells-fargo-active-cash" ? { ...card, name: pulledCardName } : card,
+		card.id === "wells-fargo-active-cash"
+			? { ...card, name: pulledCardName }
+			: card,
 	),
 	merchants: Object.entries(merchantMap).map(([domain, category]) => ({
 		domain,

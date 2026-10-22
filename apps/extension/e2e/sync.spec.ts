@@ -37,7 +37,9 @@ test.describe("account sync", () => {
 		openPopupFor,
 	}) => {
 		await seedWallet(["citi-double-cash"]);
-		accountWallet.cards = [{ cardId: "amex-gold", addedAt: "2026-10-01T00:00:00Z" }];
+		accountWallet.cards = [
+			{ cardId: "amex-gold", addedAt: "2026-10-01T00:00:00Z" },
+		];
 		const web = await context.newPage();
 		await web.goto(`${webOrigin}/`);
 
@@ -81,7 +83,9 @@ test.describe("account sync", () => {
 		// The first open triggers the pull; the second shows the pulled data.
 		await (await openPopupFor(store)).close();
 		const popup = await openPopupFor(store);
-		await expect(popup.getByText(`Wells Fargo ${pulledCardName}`)).toBeVisible();
+		await expect(
+			popup.getByText(`Wells Fargo ${pulledCardName}`),
+		).toBeVisible();
 	});
 
 	test("an empty wallet still flags checkout so the user can add cards", async ({
@@ -101,4 +105,36 @@ test.describe("account sync", () => {
 			)
 			.toBe("+");
 	});
+});
+
+test("an auto-opened popup shows the checkout the background read", async ({
+	context,
+	extensionId,
+	seedWallet,
+	serviceWorker,
+}) => {
+	await seedWallet(["citi-double-cash"]);
+	// A tab Cardmax can't read or even see the URL of, like an auto-opened
+	// popup's tab without an activeTab grant.
+	const page = await context.newPage();
+	await page.goto(`${webOrigin}/`);
+	await page.bringToFront();
+	const tabId = await serviceWorker.evaluate(async () => {
+		const { chrome } = globalThis as unknown as SwGlobal & {
+			chrome: { storage: { session: { set(v: object): Promise<void> } } };
+		};
+		const [tab] = await chrome.tabs.query({ active: true });
+		await chrome.storage.session.set({
+			[`context:${tab?.id}`]: {
+				url: "https://www.bestbuy.com/checkout/c/standard",
+				raw: { jsonLd: [], meta: {}, title: "Checkout – Best Buy" },
+			},
+		});
+		return tab?.id;
+	});
+
+	const popup = await context.newPage();
+	await popup.goto(`chrome-extension://${extensionId}/popup.html?tab=${tabId}`);
+	await expect(popup.getByText("bestbuy.com", { exact: true })).toBeVisible();
+	await expect(popup.getByText("Citi Double Cash")).toBeVisible();
 });

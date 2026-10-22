@@ -24,7 +24,13 @@ type Props = {
 	onChange: () => void;
 };
 
-export function WalletTab({ wallet, settings, catalog, link, onChange }: Props) {
+export function WalletTab({
+	wallet,
+	settings,
+	catalog,
+	link,
+	onChange,
+}: Props) {
 	const held = new Set(wallet.map((card) => card.cardId));
 
 	async function toggle(cardId: string) {
