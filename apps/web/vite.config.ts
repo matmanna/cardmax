@@ -13,7 +13,11 @@ export default defineConfig({
 		tsconfigPaths: true,
 	},
 	plugins: [
-		varlockVitePlugin({ ssrInjectMode: "auto-load" }),
+		// Vercel functions don't ship the varlock binary, so resolve env at build
+		// time there (server bundle only). Locally, keep loading .env at runtime.
+		varlockVitePlugin({
+			ssrInjectMode: process.env.VERCEL ? "resolved-env" : "auto-load",
+		}),
 		tailwindcss(),
 		tanstackStart(),
 		nitro(),
