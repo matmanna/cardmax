@@ -161,6 +161,18 @@ nav button[aria-pressed="true"] {
 	font: 13px / 16px var(--mono);
 }
 
+.domain strong {
+	font: 500 13px / 16px var(--sans);
+}
+
+.via {
+	margin-top: -10px;
+	padding: 0 20px 12px;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--muted);
+}
+
 .domain code {
 	font: inherit;
 }
