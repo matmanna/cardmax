@@ -7,6 +7,7 @@ import {
 	HowItWorks,
 	Nav,
 	Privacy,
+	WaysIn,
 } from "@/components/landing/sections";
 
 export const Route = createFileRoute("/")({
@@ -30,6 +31,7 @@ function Landing() {
 			<main>
 				<Hero />
 				<HowItWorks />
+				<WaysIn />
 				<Privacy />
 				<Closing />
 			</main>

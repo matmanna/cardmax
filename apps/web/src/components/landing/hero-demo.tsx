@@ -50,12 +50,13 @@ export function HeroDemo() {
 
 	const store = heroStores[index] ?? heroStores[0];
 	const { best, rest } = pickFor(store.domain, store.amount);
+	const topReward = best?.estimatedRewardUsd || 1;
 	const reward = useCountUp(best?.estimatedRewardUsd ?? 0, !reduced);
 
 	return (
 		<div ref={ref} className="lp-demo">
 			<fieldset className="lp-chips">
-				<legend className="lp-sr-only">Store</legend>
+				<legend className="lp-chips-label">Find the best card for:</legend>
 				{heroStores.map((s, i) => (
 					<button
 						key={s.domain}
@@ -80,7 +81,12 @@ export function HeroDemo() {
 					</span>
 				</div>
 				<div className="lp-pick" key={store.domain} aria-live="polite">
-					<span className="lp-pick-label">Pay with</span>
+					<span className="lp-pick-top">
+						<span className="lp-pick-label">Pay with</span>
+						<span className="lp-pick-tag">
+							{store.label} · {store.path === "/cart" ? "cart" : "checkout"}
+						</span>
+					</span>
 					<strong className="lp-pick-card">
 						{best ? cardLabel(best.cardId) : ""}
 					</strong>
@@ -95,10 +101,21 @@ export function HeroDemo() {
 					{rest.map((card) => (
 						<li key={card.cardId}>
 							<span>{cardLabel(card.cardId)}</span>
+							<span className="lp-rows-bar" aria-hidden>
+								<i
+									style={{
+										width: `${Math.max(8, (card.estimatedRewardUsd / topReward) * 100)}%`,
+									}}
+								/>
+							</span>
 							<span>+{usd(card.estimatedRewardUsd)}</span>
 						</li>
 					))}
 				</ul>
+				<div className="lp-window-foot">
+					<span>Compared on this device</span>
+					<span>{rest.length + 1} cards</span>
+				</div>
 			</div>
 		</div>
 	);

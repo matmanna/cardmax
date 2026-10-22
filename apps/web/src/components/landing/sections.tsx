@@ -4,9 +4,10 @@ import { HeroDemo } from "./hero-demo";
 import { Mark } from "./mark";
 import { Reveal } from "./reveal";
 import { Steps } from "./steps";
+import { Surfaces } from "./surfaces";
 
 const INSTALL_URL = "#install";
-const GITHUB_URL = "https://github.com/matmanna/cardmax";
+const GITHUB_URL = "https://github.com/matmanna/pointmaxx";
 
 export function Nav() {
 	return (
@@ -17,8 +18,10 @@ export function Nav() {
 			</span>
 			<nav>
 				<a href="#how">How it works</a>
+				<a href="#ways">Web app</a>
 				<a href="#privacy">Privacy</a>
 				<a href={GITHUB_URL}>GitHub</a>
+				<a href="/login">Sign in</a>
 				<a className="lp-button lp-button-small" href={INSTALL_URL}>
 					Add to Chrome
 				</a>
@@ -38,8 +41,8 @@ export function Hero() {
 						Add to Chrome
 						<ArrowRight size={16} aria-hidden className="lp-arrow" />
 					</a>
-					<a className="lp-link" href="#how">
-						See how it works
+					<a className="lp-link" href="/login">
+						Sign in to the web app
 					</a>
 				</div>
 			</div>
@@ -53,6 +56,17 @@ export function HowItWorks() {
 		<section className="lp-section" id="how">
 			<Reveal>
 				<Steps />
+			</Reveal>
+		</section>
+	);
+}
+
+export function WaysIn() {
+	return (
+		<section className="lp-section" id="ways">
+			<Reveal>
+				<h2>One wallet, three ways in.</h2>
+				<Surfaces />
 			</Reveal>
 		</section>
 	);
@@ -87,10 +101,15 @@ export function Closing() {
 		<section className="lp-section lp-closing" id="install">
 			<Reveal className="lp-closing-row">
 				<h2>Try it on your next order.</h2>
-				<a className="lp-button" href={INSTALL_URL}>
-					Add to Chrome
-					<ArrowRight size={16} aria-hidden className="lp-arrow" />
-				</a>
+				<div className="lp-hero-actions">
+					<a className="lp-button" href={INSTALL_URL}>
+						Add to Chrome
+						<ArrowRight size={16} aria-hidden className="lp-arrow" />
+					</a>
+					<a className="lp-link" href="/login">
+						Create an account
+					</a>
+				</div>
 			</Reveal>
 		</section>
 	);
@@ -106,6 +125,7 @@ export function Footer() {
 				</span>
 				<nav>
 					<a href="#privacy">Privacy</a>
+					<a href="/login">Sign in</a>
 					<a href={GITHUB_URL}>GitHub</a>
 				</nav>
 			</div>

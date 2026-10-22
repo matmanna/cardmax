@@ -105,7 +105,7 @@ const QUESTIONS = [
 	{ text: "target", domain: "target.com" },
 ];
 
-function answer(domain: string): string {
+export function answer(domain: string): string {
 	const merchant = guessMerchant(domain);
 	const [best] = recommend(sampleWallet, catalog, merchant, 100);
 	if (!best) return "Add a card first at pointmaxx.ing.";
