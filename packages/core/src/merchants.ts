@@ -38,7 +38,37 @@ export const merchantMap: Record<string, Category> = {
 	"shell.us": "gas",
 };
 
-// Keyword hints for merchants missing from the map, checked in order.
+// schema.org types that say what kind of business the page is.
+const businessTypes: Record<string, Category> = {
+	Restaurant: "dining",
+	FoodEstablishment: "dining",
+	CafeOrCoffeeShop: "dining",
+	FastFoodRestaurant: "dining",
+	BarOrPub: "dining",
+	Bakery: "dining",
+	IceCreamShop: "dining",
+	GroceryStore: "grocery",
+	GasStation: "gas",
+	Pharmacy: "drugstore",
+	Drugstore: "drugstore",
+	LodgingBusiness: "travel",
+	Hotel: "travel",
+	Motel: "travel",
+	Resort: "travel",
+	Airline: "travel",
+	FlightReservation: "travel",
+	LodgingReservation: "travel",
+};
+
+// Weaker than a business type: any shop can sell a product.
+const productTypes = new Set([
+	"Product",
+	"ProductGroup",
+	"Offer",
+	"AggregateOffer",
+]);
+
+// Keyword hints over the page text, used only when nothing structured matched.
 const hints: [Category, RegExp][] = [
 	["dining", /\b(restaurant|menu|takeout|delivery|diner|cafe|pizza)\b/i],
 	["grocery", /\b(grocery|groceries|supermarket|produce)\b/i],
@@ -46,8 +76,30 @@ const hints: [Category, RegExp][] = [
 	["travel", /\b(flights?|hotels?|airline|booking|resort)\b/i],
 	["gas", /\b(fuel|gas station)\b/i],
 	["streaming", /\b(streaming|subscribe to watch)\b/i],
-	["online_retail", /\b(add to cart|add to bag|checkout)\b/i],
+	[
+		"online_retail",
+		/\b(add to cart|add to bag|checkout|place order|order summary|shipping address)\b/i,
+	],
 ];
+
+function categoryFromStructuredData(
+	signals: PageSignals = {},
+): Category | undefined {
+	const types = signals.types ?? [];
+	for (const type of types) {
+		const category = businessTypes[type];
+		if (category) return category;
+	}
+	if (signals.ogType?.startsWith("restaurant")) return "dining";
+	if (types.some((t) => productTypes.has(t))) return "online_retail";
+	if (signals.ogType?.startsWith("product")) return "online_retail";
+	return undefined;
+}
+
+function categoryFromKeywords(signals: PageSignals = {}): Category | undefined {
+	const text = [signals.title, signals.description, signals.siteName].join(" ");
+	return hints.find(([, pattern]) => pattern.test(text))?.[0];
+}
 
 // Common multi-part public suffixes. Not the full Public Suffix List, just
 // enough that amazon.co.uk stays amazon.co.uk. myshopify.com is here so each
@@ -110,11 +162,19 @@ export function guessMerchant(
 		return { domain, category: curated, confidence: "high", source: "curated" };
 	}
 
-	const text = `${signals?.title ?? ""} ${signals?.description ?? ""}`;
-	const hint = hints.find(([, pattern]) => pattern.test(text));
+	const structured = categoryFromStructuredData(signals);
+	if (structured) {
+		return {
+			domain,
+			category: structured,
+			confidence: "medium",
+			source: "structured_data",
+		};
+	}
+
 	return {
 		domain,
-		category: hint?.[0] ?? "other",
+		category: categoryFromKeywords(signals) ?? "other",
 		confidence: "low",
 		source: "page_heuristic",
 	};

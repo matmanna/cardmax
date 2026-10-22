@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { guessMerchant, normalizeDomain } from "./merchants";
+import type { Category } from "./schema";
 
 describe("normalizeDomain", () => {
 	test("strips www and subdomains", () => {
@@ -55,6 +56,71 @@ describe("guessMerchant", () => {
 		expect(guess.category).toBe("dining");
 		expect(guess.source).toBe("page_heuristic");
 		expect(guess.confidence).toBe("low");
+	});
+
+	test("maps schema.org business types with medium confidence", () => {
+		const cases: [string, string][] = [
+			["Restaurant", "dining"],
+			["CafeOrCoffeeShop", "dining"],
+			["FastFoodRestaurant", "dining"],
+			["GroceryStore", "grocery"],
+			["GasStation", "gas"],
+			["Pharmacy", "drugstore"],
+			["Hotel", "travel"],
+			["FlightReservation", "travel"],
+		];
+		for (const [type, category] of cases) {
+			expect(
+				guessMerchant("local.example", { types: ["WebSite", type] }),
+			).toEqual({
+				domain: "local.example",
+				category: category as Category,
+				confidence: "medium",
+				source: "structured_data",
+			});
+		}
+	});
+
+	test("structured data beats keywords", () => {
+		const guess = guessMerchant("corner.example", {
+			title: "Corner Pharmacy - order takeout",
+			types: ["Pharmacy"],
+		});
+		expect(guess.category).toBe("drugstore");
+		expect(guess.source).toBe("structured_data");
+	});
+
+	test("a business type beats a product on the same page", () => {
+		const guess = guessMerchant("bakery.example", {
+			types: ["Product", "Bakery"],
+		});
+		expect(guess.category).toBe("dining");
+	});
+
+	test("a product or offer page on an unmapped shop is online retail", () => {
+		for (const types of [["Product"], ["Offer"]]) {
+			const guess = guessMerchant("boutique.example", { types });
+			expect(guess.category).toBe("online_retail");
+			expect(guess.confidence).toBe("medium");
+		}
+		expect(
+			guessMerchant("boutique.example", { ogType: "product" }).category,
+		).toBe("online_retail");
+	});
+
+	test("the curated map beats structured data", () => {
+		const guess = guessMerchant("www.costco.com", { types: ["Product"] });
+		expect(guess.category).toBe("warehouse_club");
+		expect(guess.source).toBe("curated");
+	});
+
+	test("cart and checkout phrases are weak online retail hints", () => {
+		for (const title of ["Place order", "Order summary", "Shipping address"]) {
+			const guess = guessMerchant("store.example", { title });
+			expect(guess.category).toBe("online_retail");
+			expect(guess.confidence).toBe("low");
+			expect(guess.source).toBe("page_heuristic");
+		}
 	});
 
 	test("defaults to other when nothing matches", () => {

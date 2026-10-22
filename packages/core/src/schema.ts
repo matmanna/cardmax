@@ -52,7 +52,18 @@ export const merchantGuess = z.object({
 	domain: z.string(),
 	category,
 	confidence: z.enum(["high", "medium", "low"]),
-	source: z.enum(["curated", "page_heuristic", "user_override"]),
+	source: z.enum([
+		"curated",
+		"page_heuristic",
+		"user_override",
+		"structured_data",
+	]),
+	// The merchant's display name when the domain is not the merchant's own.
+	label: z.string().optional(),
+	// The third-party checkout or payment host the page is on, if any.
+	via: z
+		.enum(["shopify", "stripe", "google_pay", "paypal", "square"])
+		.optional(),
 });
 export type MerchantGuess = z.infer<typeof merchantGuess>;
 
