@@ -1,3 +1,3 @@
 {
-  "extends": "@cardmax/config/tsconfig.base.json"
+	"extends": "@cardmax/config/tsconfig.base.json"
 }
