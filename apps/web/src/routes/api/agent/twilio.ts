@@ -35,7 +35,11 @@ export const Route = createFileRoute("/api/agent/twilio")({
 					new URLSearchParams(await request.text()),
 				);
 				// Signed against the URL configured in Twilio; request.url differs behind Vercel.
-				const url = `${ENV.BETTER_AUTH_URL.replace(/\/$/, "")}/api/agent/twilio`;
+				// Twilio signs the exact public URL it called. Behind a tunnel or a proxy
+				// that differs from BETTER_AUTH_URL, so TWILIO_WEBHOOK_URL can override it.
+				const url =
+					ENV.TWILIO_WEBHOOK_URL ||
+					`${ENV.BETTER_AUTH_URL.replace(/\/$/, "")}/api/agent/twilio`;
 				const signature = request.headers.get("x-twilio-signature");
 				if (!verifyTwilioSignature(authToken, url, params, signature)) {
 					return new Response("Forbidden", { status: 403 });
