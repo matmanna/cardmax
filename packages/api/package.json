@@ -11,6 +11,7 @@
 		"test": "bun test"
 	},
 	"dependencies": {
+		"@cardmax/agent": "workspace:*",
 		"@cardmax/auth": "workspace:*",
 		"@cardmax/core": "workspace:*",
 		"@cardmax/db": "workspace:*",
