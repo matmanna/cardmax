@@ -26,6 +26,17 @@ export const unlinkedReply =
 export const unknownMerchantReply =
 	'I don\'t know that store yet. Text its website instead, like "costco.com".';
 
+export const photoUnclearReply =
+	"I couldn't tell which store that is from the photo. Text its name instead.";
+
+// "Looks like Target (medium confidence)." Asks for a correction unless confident.
+export function photoPrefix(seen: { name: string | null; confidence: string }) {
+	const prefix = `Looks like ${seen.name} (${seen.confidence} confidence).`;
+	return seen.confidence === "high"
+		? prefix
+		: `${prefix} Wrong store? Reply with its name.`;
+}
+
 export function emptyWalletReply(webUrl: string): string {
 	return `Your synced wallet is empty. Add cards in the Cardmax extension, then press "Save to account" at ${webUrl}/sync.`;
 }

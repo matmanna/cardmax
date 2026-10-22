@@ -12,6 +12,7 @@
 		"auth:generate": "varlock run -- bun x auth@latest generate --config src/services.ts --output ../../packages/db/src/schema/auth.ts --yes"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^1.1.0",
 		"@cardmax/agent": "workspace:*",
 		"@cardmax/api": "workspace:*",
 		"@cardmax/auth": "workspace:*",
