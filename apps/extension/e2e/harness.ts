@@ -32,8 +32,38 @@ const fixtureHtml = new Map(
 );
 const webAppHtml = "<!doctype html><title>Cardmax web (fixture)</title>";
 
-// Product path used for every fixture page. The path itself does not matter.
+// Paths served for every fixture store: a product page and a checkout page
+// with the same markup. Any other path is a 404.
 const productPath = "/product/fixture";
+export const checkoutPath = "/checkout";
+
+// The Cardmax API the e2e bundle talks to (WXT_API_URL in build:e2e).
+export const apiOrigin = "https://api.cardmax.test";
+export const listingsUrl = `${apiOrigin}/api/rpc/listings/search`;
+
+// What the mocked listings.search returns, in oRPC's { json } envelope.
+export const mockListings = [
+	{
+		merchant: "bestbuy",
+		domain: "www.bestbuy.com",
+		title: "Acme 55-inch TV",
+		priceUsd: 349.99,
+		url: "https://www.bestbuy.com/product/fixture",
+	},
+	{
+		merchant: "walmart",
+		domain: "www.walmart.com",
+		title: "Acme 55-inch TV",
+		priceUsd: 339,
+		url: "https://www.walmart.com/product/fixture",
+	},
+];
+
+const cors = {
+	"access-control-allow-origin": "*",
+	"access-control-allow-methods": "POST, OPTIONS",
+	"access-control-allow-headers": "content-type",
+};
 
 type Fixtures = {
 	context: BrowserContext;
@@ -41,9 +71,11 @@ type Fixtures = {
 	extensionId: string;
 	// Requests to any host that is not a fixture. Must stay empty.
 	leaks: string[];
-	// Requests made by popup pages. With no WXT_API_URL this must stay empty.
+	// Requests made by popup pages to anything but the Cardmax API. Must stay empty.
 	popupRequests: string[];
-	openStore: (store: Store) => Promise<Page>;
+	// Bodies POSTed to the Cardmax API. Each test asserts exactly what it sent.
+	apiCalls: unknown[];
+	openStore: (store: Store, path?: string) => Promise<Page>;
 	openPopupFor: (page?: Page) => Promise<Page>;
 	seedWallet: (cardIds: string[]) => Promise<void>;
 };
@@ -54,6 +86,9 @@ export type SwGlobal = {
 	chrome: {
 		tabs: {
 			query(query: object): Promise<{ id?: number; url?: string }[]>;
+		};
+		action: {
+			getBadgeText(details: { tabId: number }): Promise<string>;
 		};
 		storage: {
 			local: {
@@ -75,8 +110,12 @@ export const test = base.extend<Fixtures>({
 	popupRequests: async ({}, use) => {
 		await use([]);
 	},
+	// biome-ignore lint/correctness/noEmptyPattern: required by Playwright
+	apiCalls: async ({}, use) => {
+		await use([]);
+	},
 
-	context: async ({ headless, leaks }, use, testInfo) => {
+	context: async ({ headless, leaks, apiCalls }, use, testInfo) => {
 		const context = await chromium.launchPersistentContext("", {
 			// The full Chromium build; its new headless mode can load extensions.
 			channel: "chromium",
@@ -98,13 +137,30 @@ export const test = base.extend<Fixtures>({
 		for (const host of fixtureHtml.keys()) {
 			await context.route(`https://${host}/**`, (route) => {
 				const { pathname } = new URL(route.request().url());
-				if (pathname !== productPath) return route.fulfill({ status: 404 });
+				if (pathname !== productPath && pathname !== checkoutPath) {
+					return route.fulfill({ status: 404 });
+				}
 				return route.fulfill({
 					contentType: "text/html; charset=utf-8",
 					body: fixtureHtml.get(host),
 				});
 			});
 		}
+		await context.route(`${apiOrigin}/**`, (route) => {
+			const request = route.request();
+			if (request.method() === "OPTIONS") {
+				return route.fulfill({ status: 204, headers: cors });
+			}
+			if (request.url() !== listingsUrl || request.method() !== "POST") {
+				return route.fulfill({ status: 404, headers: cors });
+			}
+			apiCalls.push(request.postDataJSON());
+			return route.fulfill({
+				headers: cors,
+				contentType: "application/json",
+				body: JSON.stringify({ json: mockListings }),
+			});
+		});
 		await context.route(`${webOrigin}/**`, (route) =>
 			route.fulfill({ contentType: "text/html", body: webAppHtml }),
 		);
@@ -154,9 +210,9 @@ export const test = base.extend<Fixtures>({
 	},
 
 	openStore: async ({ context }, use) => {
-		await use(async (store) => {
+		await use(async (store, path = productPath) => {
 			const page = await context.newPage();
-			await page.goto(`https://${stores[store]}${productPath}`);
+			await page.goto(`https://${stores[store]}${path}`);
 			return page;
 		});
 	},
@@ -178,8 +234,12 @@ export const test = base.extend<Fixtures>({
 			}
 			const popup = await context.newPage();
 			popup.on("request", (request) => {
-				if (!request.url().startsWith("chrome-extension:")) {
-					popupRequests.push(request.url());
+				const url = request.url();
+				if (
+					!url.startsWith("chrome-extension:") &&
+					!url.startsWith(apiOrigin)
+				) {
+					popupRequests.push(url);
 				}
 			});
 			await popup.goto(`chrome-extension://${extensionId}/popup.html${query}`);
@@ -201,7 +261,7 @@ export const test = base.extend<Fixtures>({
 });
 
 // Privacy assertion for every test: nothing left for a non-fixture host, and
-// the popup made no network request at all (no API is configured).
+// the popup made no request except to the Cardmax API.
 test.afterEach(async ({ leaks, popupRequests }) => {
 	expect(leaks, "requests to non-fixture hosts").toEqual([]);
 	expect(popupRequests, "requests from the popup").toEqual([]);

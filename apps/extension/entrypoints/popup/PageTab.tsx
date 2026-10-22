@@ -18,6 +18,8 @@ import { listingsEndpoint, searchListings } from "@/lib/api";
 import { type ActiveTab, pageSignals, readActiveTab } from "@/lib/page";
 import { type Settings, setOverride } from "@/lib/storage";
 
+import { SiteAccess } from "./SiteAccess";
+
 type Props = {
 	wallet: WalletCard[];
 	settings: Settings;
@@ -238,6 +240,13 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 						</ol>
 					)}
 				</div>
+			)}
+
+			{page?.url.startsWith("https:") && (
+				<SiteAccess
+					origin={new URL(page.url).origin}
+					domain={merchant.domain}
+				/>
 			)}
 		</section>
 	);

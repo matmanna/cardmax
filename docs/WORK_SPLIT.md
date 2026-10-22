@@ -18,6 +18,25 @@ Two people. Each person owns separate directories, so the two of you rarely edit
 - **Text channel that works for Android too.** Photon is iMessage-first, and part of the team uses Android. Twilio SMS and MMS is being evaluated, along with Twilio's MCP server so an agent can set it up. Build the agent behind a channel adapter (below) so the channel can change without a rewrite.
 - **Web dashboard** at `/wallet`, matching the dashboard tab on the landing page: the synced wallet table, the text agent panel, and a "what our server holds" panel.
 
+## Demo flow and screens
+
+Each step of the demo has a design in the Paper file "Cardmax", on the page **Platform**. Build each screen from its artboard.
+
+| #   | Step                                              | Artboard                           | Route or surface                  | Owner                        |
+| --- | ------------------------------------------------- | ---------------------------------- | --------------------------------- | ---------------------------- |
+| 1   | Land on the site and understand the product       | "Landing — product" (page 1)       | `/` (PR #4)                       | B reviews                    |
+| 2   | Create an account, with the wallet-sync consent   | 01 Sign up                         | `/signup`                         | B                            |
+| 3   | Pick your cards                                   | 02 Onboarding · Add cards          | `/onboarding/cards`               | B                            |
+| 4   | Install the extension and sync                    | 03 Onboarding · Connect extension  | `/onboarding/extension`           | B (page), A (extension side) |
+| 5   | Text the link code to Twilio                      | 04 Onboarding · Link phone         | `/onboarding/phone`               | B                            |
+| 6   | Shop: the popup picks a card, then compare prices | "Landing — product", popup states  | Extension popup                   | A                            |
+| 7   | Text a store name or a storefront photo           | 09 SMS · Link and storefront photo | Twilio webhook                    | B                            |
+| 8   | Manage cards and the point value                  | 05 Wallet                          | `/wallet`                         | B                            |
+| 9   | Text agent settings and unlink                    | 06 Text agent                      | `/texts`                          | B                            |
+| 10  | See what's stored, export, delete                 | 07 Privacy and data                | `/privacy`                        | B                            |
+| 11  | Plan (free during beta)                           | 08 Plan                            | `/plan`                           | B                            |
+| 12  | Turn on automatic suggestions for a store         | 10 Popup · Automatic on this site  | Extension popup and toolbar badge | A (done)                     |
+
 ## Ownership
 
 | Area                                                            | Owner                             | Paths                                                                                          |
@@ -45,12 +64,12 @@ Two people. Each person owns separate directories, so the two of you rarely edit
 
 ### Person A (@matmanna)
 
-| #   | Task                                                                                                              | Status        |
-| --- | ----------------------------------------------------------------------------------------------------------------- | ------------- |
-| 1   | Point the extension at the real `listings.search` once task B4 ships, and add an e2e test against a mocked API    | Waiting on B4 |
-| 2   | Per-site access button (`requestSiteAccess`), so the extension can suggest a card automatically on checkout pages | To do         |
-| 3   | Settle the text channel and write the setup steps (Twilio and MCP, or Photon)                                     | In progress   |
-| 4   | Keep the Paper file and the catalog current, and add cards on request                                             | Ongoing       |
+| #   | Task                                                                                                                      | Status                                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | Point the extension at the real `listings.search`, with an e2e test against a mocked API that enforces the exact request  | **Done** (extension side). Goes live when B4 ships |
+| 2   | "Automatic on this site": a popup switch grants one site, and checkout pages there set a toolbar badge with the best card | **Done**                                           |
+| 3   | Settle the text channel and write the setup steps (Twilio and MCP, or Photon)                                             | In progress                                        |
+| 4   | Keep the Paper file and the catalog current, and add cards on request                                                     | Ongoing                                            |
 
 ## The text agent's channel adapter
 

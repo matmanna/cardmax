@@ -1,6 +1,12 @@
-import type { Page } from "@playwright/test";
+import type { Page, Worker } from "@playwright/test";
 
-import { expect, type SwGlobal, test } from "./harness";
+import {
+	checkoutPath,
+	expect,
+	listingsUrl,
+	type SwGlobal,
+	test,
+} from "./harness";
 
 // From e2e/fixtures/bestbuy.html.
 const bestBuyGtin = "0012345678905";
@@ -182,11 +188,10 @@ test.describe("compare at other stores", () => {
 		await seedWallet(["citi-double-cash", "amex-gold"]);
 	});
 
-	test("Best Buy payload is the UPC only; Cancel sends nothing; Send shows samples", async ({
+	test("Best Buy sends the UPC only, Cancel sends nothing, and Send ranks the API's listings", async ({
 		openPopupFor,
 		openStore,
-		popupRequests,
-		leaks,
+		apiCalls,
 	}) => {
 		const popup = await openPopupFor(await openStore("bestbuy"));
 		const compare = popup.getByRole("button", {
@@ -195,26 +200,26 @@ test.describe("compare at other stores", () => {
 
 		await compare.click();
 		expect(await payload(popup)).toEqual({ upc: bestBuyGtin });
-		await expect(
-			popup.getByText("Sends to nowhere (sample data, nothing is sent)"),
-		).toBeVisible();
+		await expect(popup.getByText(`Sends to ${listingsUrl}`)).toBeVisible();
 
 		await popup.getByRole("button", { name: "Cancel" }).click();
 		await expect(popup.getByText(/^Sends to /)).toHaveCount(0);
 		await expect(compare).toBeVisible();
-		expect(popupRequests).toEqual([]);
+		expect(apiCalls).toEqual([]);
 
 		await compare.click();
 		await popup.getByRole("button", { name: "Send" }).click();
+		// Walmart lists lower and Double Cash pays 2% at both, so it ranks first.
+		const listings = popup.getByRole("list").last();
+		await expect(listings.getByRole("listitem").first()).toContainText(
+			"walmart.com",
+		);
 		await expect(
 			popup.getByRole("link", { name: "bestbuy.com" }),
 		).toBeVisible();
-		await expect(
-			popup.getByRole("link", { name: "walmart.com" }),
-		).toBeVisible();
-		await expect(popup.getByText("$299.99 list")).toBeVisible();
-		expect(popupRequests).toEqual([]);
-		expect(leaks).toEqual([]);
+		await expect(popup.getByText("$339.00 list")).toBeVisible();
+		// Exactly the payload shown, in oRPC's envelope, and nothing else.
+		expect(apiCalls).toEqual([{ json: { upc: bestBuyGtin } }]);
 	});
 
 	test("Walmart meta-tag page sends the title only", async ({
@@ -242,3 +247,49 @@ test.describe("compare at other stores", () => {
 		expect(await payload(popup)).toEqual({ title: "Acme Robot Vacuum" });
 	});
 });
+
+test.describe("automatic on this site", () => {
+	test.beforeEach(async ({ seedWallet }) => {
+		await seedWallet(["citi-double-cash", "amex-gold"]);
+	});
+
+	test("the popup shows the site as on when Chrome has access", async ({
+		openPopupFor,
+		openStore,
+	}) => {
+		const popup = await openPopupFor(await openStore("bestbuy"));
+		await expect(popup.getByText("Automatic on bestbuy.com")).toBeVisible();
+		await expect(
+			popup.getByRole("switch", { name: /bestbuy\.com/ }),
+		).toHaveAttribute("aria-checked", "true");
+	});
+
+	test("a checkout page sets the toolbar badge to the best card", async ({
+		openStore,
+		serviceWorker,
+		apiCalls,
+	}) => {
+		const page = await openStore("bestbuy", checkoutPath);
+		await expect.poll(() => badgeFor(serviceWorker, page.url())).toBe("2%");
+		expect(apiCalls).toEqual([]);
+	});
+
+	test("a product page leaves the badge empty", async ({
+		openStore,
+		serviceWorker,
+	}) => {
+		const page = await openStore("bestbuy");
+		await page.waitForLoadState("load");
+		expect(await badgeFor(serviceWorker, page.url())).toBe("");
+	});
+});
+
+async function badgeFor(serviceWorker: Worker, url: string): Promise<string> {
+	return serviceWorker.evaluate(async (tabUrl) => {
+		const { chrome } = globalThis as unknown as SwGlobal;
+		const tabs = await chrome.tabs.query({});
+		const tab = tabs.find((t) => t.url === tabUrl);
+		if (tab?.id === undefined) return "no tab";
+		return chrome.action.getBadgeText({ tabId: tab.id });
+	}, url);
+}
