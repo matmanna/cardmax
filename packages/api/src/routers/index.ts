@@ -1,6 +1,8 @@
 import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
+import { catalogRouter } from "./catalog";
+import { deviceRouter } from "./device";
 import { listingsRouter } from "./listings";
 import { walletRouter } from "./wallet";
 
@@ -16,6 +18,8 @@ export const appRouter = {
 	}),
 	wallet: walletRouter,
 	listings: listingsRouter,
+	catalog: catalogRouter,
+	device: deviceRouter,
 };
 export type AppRouter = typeof appRouter;
 export type AppRouterClient = RouterClient<typeof appRouter>;

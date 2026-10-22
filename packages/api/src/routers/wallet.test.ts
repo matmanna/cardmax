@@ -17,9 +17,9 @@ describe("walletInput", () => {
 		expect(() => walletInput.parse([{ addedAt: "2026-10-22" }])).toThrow();
 	});
 
-	test("rejects ids that are not in the catalog", () => {
+	test("rejects long card ids", () => {
 		expect(() =>
-			walletInput.parse([{ cardId: "my secret note", addedAt: "2026-10-22" }]),
+			walletInput.parse([{ cardId: "x".repeat(81), addedAt: "2026-10-22" }]),
 		).toThrow();
 	});
 

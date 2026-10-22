@@ -1,4 +1,5 @@
 import { appRouter } from "@cardmax/api/routers/index";
+import { deviceTokenHeader } from "@cardmax/core";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { ORPCError, onError } from "@orpc/server";
@@ -30,6 +31,7 @@ const rpcHandler = new RPCHandler(appRouter, {
 		new CORSPlugin({
 			origin: (origin) => (origin === extensionOrigin ? origin : null),
 			allowMethods: ["POST", "OPTIONS"],
+			allowHeaders: ["content-type", deviceTokenHeader],
 			credentials: false,
 		}),
 	],
