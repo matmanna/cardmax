@@ -49,9 +49,43 @@ const hints: [Category, RegExp][] = [
 	["online_retail", /\b(add to cart|add to bag|checkout)\b/i],
 ];
 
+// Common multi-part public suffixes. Not the full Public Suffix List, just
+// enough that amazon.co.uk stays amazon.co.uk. myshopify.com is here so each
+// Shopify store keeps its own domain for overrides.
+const multiPartSuffixes = new Set([
+	"co.uk",
+	"org.uk",
+	"me.uk",
+	"ac.uk",
+	"gov.uk",
+	"com.au",
+	"net.au",
+	"org.au",
+	"co.nz",
+	"co.jp",
+	"ne.jp",
+	"or.jp",
+	"co.kr",
+	"co.in",
+	"co.za",
+	"co.il",
+	"com.br",
+	"com.mx",
+	"com.ar",
+	"com.sg",
+	"com.hk",
+	"com.tw",
+	"com.cn",
+	"com.tr",
+	"myshopify.com",
+]);
+
+// The registrable domain, so www., m., shop., checkout. and the like drop away.
 export function normalizeDomain(hostname: string): string {
 	const labels = hostname.toLowerCase().replace(/\.$/, "").split(".");
-	return labels.slice(-2).join(".");
+	const suffix = labels.slice(-2).join(".");
+	const size = multiPartSuffixes.has(suffix) ? 3 : 2;
+	return labels.slice(-size).join(".");
 }
 
 export function guessMerchant(

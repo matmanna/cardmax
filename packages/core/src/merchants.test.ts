@@ -8,6 +8,25 @@ describe("normalizeDomain", () => {
 		expect(normalizeDomain("smile.amazon.com")).toBe("amazon.com");
 		expect(normalizeDomain("BestBuy.com.")).toBe("bestbuy.com");
 	});
+
+	test("keeps the label before a multi-part public suffix", () => {
+		expect(normalizeDomain("www.amazon.co.uk")).toBe("amazon.co.uk");
+		expect(normalizeDomain("amazon.com.au")).toBe("amazon.com.au");
+		expect(normalizeDomain("m.rakuten.co.jp")).toBe("rakuten.co.jp");
+		expect(normalizeDomain("co.uk")).toBe("co.uk");
+	});
+
+	test("strips shop, order, checkout, and secure subdomains", () => {
+		expect(normalizeDomain("shop.nike.com")).toBe("nike.com");
+		expect(normalizeDomain("order.dominos.com")).toBe("dominos.com");
+		expect(normalizeDomain("secure.checkout.example.co.uk")).toBe(
+			"example.co.uk",
+		);
+	});
+
+	test("treats each Shopify store as its own domain", () => {
+		expect(normalizeDomain("acme.myshopify.com")).toBe("acme.myshopify.com");
+	});
 });
 
 describe("guessMerchant", () => {
