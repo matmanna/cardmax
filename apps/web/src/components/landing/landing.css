@@ -1189,6 +1189,24 @@
 	font: 16px / 26px var(--lp-mono);
 }
 
+.lp-ai {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-top: 64px;
+}
+
+.lp-ai h3 {
+	font-size: 22px;
+	line-height: 28px;
+}
+
+.lp-ai > p {
+	max-width: 560px;
+	margin-bottom: 16px;
+	color: var(--lp-muted);
+}
+
 /* Closing */
 
 .lp-closing-row {
