@@ -7,4 +7,5 @@ export const relations = {
 	...schema.authRelations,
 	...schema.walletRelations,
 	...schema.deviceRelations,
+	...schema.phoneRelations,
 };

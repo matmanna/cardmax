@@ -5,7 +5,8 @@
 		"declaration": true,
 		"declarationMap": true,
 		"emitDeclarationOnly": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"types": ["node", "bun"]
 	},
 	"include": ["src/**/*.ts"],
 	"references": [{ "path": "../core" }]

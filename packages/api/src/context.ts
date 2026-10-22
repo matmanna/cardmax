@@ -9,4 +9,6 @@ export type Context = {
 	// Salted hash of the client IP for rate limiting. Never the raw IP.
 	clientKey: string | null;
 	listings: { bestBuyApiKey?: string };
+	// HMAC key for phone link codes (shared with the agent webhook).
+	agentSecret: string;
 };

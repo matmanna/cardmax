@@ -1,0 +1,25 @@
+{
+	"name": "@cardmax/agent",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"build": "tsc -b",
+		"check-types": "tsc -b",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@anthropic-ai/sdk": "^1.1.0",
+		"@cardmax/core": "workspace:*",
+		"@cardmax/db": "workspace:*",
+		"drizzle-orm": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@cardmax/config": "workspace:*",
+		"@types/bun": "^1.4.3",
+		"typescript": "catalog:"
+	}
+}
