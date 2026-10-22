@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { type Catalog, getCatalog } from "@/lib/catalog";
+import { readActiveTab } from "@/lib/page";
 import {
 	getLink,
 	getSettings,
@@ -16,7 +17,7 @@ import { WalletTab } from "./WalletTab";
 type Tab = "page" | "wallet";
 
 export default function App() {
-	const [tab, setTab] = useState<Tab>("page");
+	const [tab, setTab] = useState<Tab | null>(null);
 	const [wallet, setWalletState] = useState<
 		Awaited<ReturnType<typeof getWallet>>
 	>([]);
@@ -32,20 +33,27 @@ export default function App() {
 		setSettingsState(nextSettings);
 		setCatalog(nextCatalog);
 		setLinkState(nextLink);
-		if (nextWallet.length === 0) setTab("wallet");
+		return nextWallet;
 	}, []);
 
 	// Show what's on the device right away, then again after the background
-	// pulls the account wallet and catalog.
+	// pulls the account wallet and catalog. The starting tab is picked once,
+	// from the first load; after that only the user's clicks change it.
 	useEffect(() => {
-		reload();
+		Promise.all([reload(), readActiveTab().catch(() => null)]).then(
+			([nextWallet, page]) =>
+				setTab((current) => {
+					if (current) return current;
+					return !page && nextWallet.length === 0 ? "wallet" : "page";
+				}),
+		);
 		browser.runtime
 			.sendMessage({ type: "cardmax:pull" })
 			.catch(() => {})
 			.then(reload);
 	}, [reload]);
 
-	if (!settings || !catalog) return null;
+	if (!settings || !catalog || !tab) return null;
 
 	return (
 		<main>
@@ -77,6 +85,7 @@ export default function App() {
 					settings={settings}
 					catalog={catalog}
 					onChange={reload}
+					onOpenWallet={() => setTab("wallet")}
 				/>
 			) : (
 				<WalletTab
