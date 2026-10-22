@@ -53,11 +53,7 @@ export function PageTab({ wallet, settings, onChange }: Props) {
 			setProduct(parsed);
 			if (parsed?.priceUsd) setAmount(parsed.priceUsd);
 			setMerchant(
-				guessMerchant(
-					page.hostname,
-					pageSignals(page.raw),
-					settings.overrides,
-				),
+				guessMerchant(page.hostname, pageSignals(page.raw), settings.overrides),
 			);
 		});
 	}, [settings.overrides]);

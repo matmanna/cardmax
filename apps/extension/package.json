@@ -1,32 +1,32 @@
 {
-  "name": "@cardmax/extension",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Cardmax browser extension",
-  "type": "module",
-  "scripts": {
-    "dev": "wxt --port 5555",
-    "dev:firefox": "wxt -b firefox",
-    "build": "wxt build",
-    "build:firefox": "wxt build -b firefox",
-    "zip": "wxt zip",
-    "zip:firefox": "wxt zip -b firefox",
-    "postinstall": "wxt prepare",
-    "check-types": "tsc --noEmit"
-  },
-  "dependencies": {
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "@cardmax/core": "workspace:*",
-    "@orpc/client": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@wxt-dev/module-react": "^1.1.5",
-    "typescript": "catalog:",
-    "web-ext": "^10.5.0",
-    "wxt": "^0.21.3"
-  }
+	"name": "@cardmax/extension",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Cardmax browser extension",
+	"type": "module",
+	"scripts": {
+		"dev": "wxt --port 5555",
+		"dev:firefox": "wxt -b firefox",
+		"build": "wxt build",
+		"build:firefox": "wxt build -b firefox",
+		"zip": "wxt zip",
+		"zip:firefox": "wxt zip -b firefox",
+		"postinstall": "wxt prepare",
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"react": "^19.2.4",
+		"react-dom": "^19.2.4",
+		"@cardmax/core": "workspace:*",
+		"@orpc/client": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"@wxt-dev/module-react": "^1.1.5",
+		"typescript": "catalog:",
+		"web-ext": "^10.5.0",
+		"wxt": "^0.21.3"
+	}
 }

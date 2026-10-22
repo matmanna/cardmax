@@ -72,9 +72,7 @@ export function WalletTab({ wallet, settings, onChange }: Props) {
 					</button>
 				) : (
 					<>
-						<p className="muted">
-							Sends are off and local data is deleted.
-						</p>
+						<p className="muted">Sends are off and local data is deleted.</p>
 						<button type="button" onClick={resume}>
 							Turn sends back on
 						</button>

@@ -2,7 +2,9 @@
 body {
 	margin: 0;
 	width: 360px;
-	font: 14px/1.4 system-ui, sans-serif;
+	font:
+		14px / 1.4 system-ui,
+		sans-serif;
 }
 main {
 	padding: 12px;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { getSettings, getWallet, type Settings } from "@/lib/storage";
 
@@ -14,7 +14,7 @@ export default function App() {
 	>([]);
 	const [settings, setSettingsState] = useState<Settings | null>(null);
 
-	async function reload() {
+	const reload = useCallback(async () => {
 		const [nextWallet, nextSettings] = await Promise.all([
 			getWallet(),
 			getSettings(),
@@ -22,11 +22,11 @@ export default function App() {
 		setWalletState(nextWallet);
 		setSettingsState(nextSettings);
 		if (nextWallet.length === 0) setTab("wallet");
-	}
+	}, []);
 
 	useEffect(() => {
 		reload();
-	}, []);
+	}, [reload]);
 
 	if (!settings) return null;
 
