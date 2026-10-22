@@ -32,6 +32,7 @@
 		"db:studio": "turbo run db:studio -F @cardmax/db --",
 		"db:generate": "turbo run db:generate -F @cardmax/db --",
 		"db:migrate": "turbo run db:migrate -F @cardmax/db --",
+		"db:seed": "turbo run db:seed -F @cardmax/db",
 		"db:start": "turbo run db:start -F @cardmax/db",
 		"db:stop": "turbo run db:stop -F @cardmax/db",
 		"db:down": "turbo run db:down -F @cardmax/db",

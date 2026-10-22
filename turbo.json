@@ -33,6 +33,9 @@
 			"cache": false,
 			"interactive": true
 		},
+		"db:seed": {
+			"cache": false
+		},
 		"db:start": {
 			"cache": false
 		},
