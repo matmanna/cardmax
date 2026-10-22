@@ -7,19 +7,23 @@
 	},
 	"scripts": {
 		"build": "tsc -b",
-		"check-types": "tsc -b"
+		"check-types": "tsc -b",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@cardmax/auth": "workspace:*",
+		"@cardmax/core": "workspace:*",
 		"@cardmax/db": "workspace:*",
 		"@orpc/client": "catalog:",
 		"@orpc/openapi": "catalog:",
 		"@orpc/server": "catalog:",
 		"@orpc/zod": "catalog:",
+		"drizzle-orm": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@cardmax/config": "workspace:*",
+		"@types/bun": "^1.4.3",
 		"typescript": "catalog:"
 	}
 }

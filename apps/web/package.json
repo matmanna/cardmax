@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@cardmax/api": "workspace:*",
 		"@cardmax/auth": "workspace:*",
+		"@cardmax/core": "workspace:*",
 		"@cardmax/db": "workspace:*",
 		"@cardmax/ui": "workspace:*",
 		"@orpc/client": "catalog:",

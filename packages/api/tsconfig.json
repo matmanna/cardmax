@@ -5,8 +5,13 @@
 		"declaration": true,
 		"declarationMap": true,
 		"emitDeclarationOnly": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"types": ["node", "bun"]
 	},
 	"include": ["src/**/*.ts"],
-	"references": [{ "path": "../db" }, { "path": "../auth" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../db" },
+		{ "path": "../auth" }
+	]
 }
