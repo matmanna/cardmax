@@ -24,6 +24,7 @@ type Props = {
 	wallet: WalletCard[];
 	settings: Settings;
 	onChange: () => void;
+	onOpenWallet: () => void;
 	catalog: Catalog;
 };
 
@@ -46,7 +47,13 @@ function usd(value: number) {
 	return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export function PageTab({ wallet, settings, catalog, onChange }: Props) {
+export function PageTab({
+	wallet,
+	settings,
+	catalog,
+	onChange,
+	onOpenWallet,
+}: Props) {
 	const cardName = new Map(
 		catalog.cards.map((card) => [card.id, `${card.issuer} ${card.name}`]),
 	);
@@ -200,7 +207,12 @@ export function PageTab({ wallet, settings, catalog, onChange }: Props) {
 					)}
 				</>
 			) : (
-				<p className="empty">Add cards in the Wallet tab.</p>
+				<>
+					<p className="empty">Add cards in the Wallet tab.</p>
+					<button type="button" className="secondary" onClick={onOpenWallet}>
+						Add your cards
+					</button>
+				</>
 			)}
 
 			{product && (
