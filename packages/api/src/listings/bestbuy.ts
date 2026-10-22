@@ -10,7 +10,7 @@ const bestBuyResponse = z.object({
 		z.object({
 			name: z.string(),
 			salePrice: z.number().nonnegative(),
-			url: z.url(),
+			url: z.string(),
 		}),
 	),
 });
@@ -45,16 +45,34 @@ export function bestBuyUrls(query: ListingQuery, apiKey: string): string[] {
 	return urls;
 }
 
+// The extension renders these as links, so accept only https on Best Buy's own hosts.
+const listingHosts = new Set([
+	"www.bestbuy.com",
+	"bestbuy.com",
+	"api.bestbuy.com",
+]);
+
+export function isBestBuyUrl(url: string): boolean {
+	try {
+		const parsed = new URL(url);
+		return parsed.protocol === "https:" && listingHosts.has(parsed.hostname);
+	} catch {
+		return false;
+	}
+}
+
 export function toListings(body: unknown): Listing[] {
 	const parsed = bestBuyResponse.safeParse(body);
 	if (!parsed.success) return [];
-	return parsed.data.products.map((product) => ({
-		merchant: "bestbuy",
-		domain: "www.bestbuy.com",
-		title: product.name,
-		priceUsd: product.salePrice,
-		url: product.url,
-	}));
+	return parsed.data.products
+		.filter((product) => isBestBuyUrl(product.url))
+		.map((product) => ({
+			merchant: "bestbuy",
+			domain: "www.bestbuy.com",
+			title: product.name,
+			priceUsd: product.salePrice,
+			url: product.url,
+		}));
 }
 
 // UPC first; fall back to title only when the UPC finds nothing.
