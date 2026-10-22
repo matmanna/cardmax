@@ -75,11 +75,22 @@ export async function handleInbound(
 		return unlinkedReply;
 	}
 
+	return answerFor(userId, inbound, { store, webUrl, fetchImage, identifyStore });
+}
+
+// The answer for a known user: a store name or a storefront photo in, the card
+// to use out. The web "Try it" panel calls this too, so it matches texting.
+export async function answerFor(
+	userId: string,
+	{ text: rawText, imageUrl }: Pick<Inbound, "text" | "imageUrl">,
+	{ store, webUrl, fetchImage, identifyStore }: AgentDeps,
+): Promise<string> {
+	const text = rawText?.trim() ?? "";
 	// A typed store name wins over a photo sent with it.
 	let hostname = merchantFromText(text);
 	let seen: StoreGuess | null = null;
-	if (!hostname && inbound.imageUrl) {
-		seen = await identifyPhoto(inbound.imageUrl, fetchImage, identifyStore);
+	if (!hostname && imageUrl) {
+		seen = await identifyPhoto(imageUrl, fetchImage, identifyStore);
 		if (!seen?.domain || !seen.name) return photoUnclearReply;
 		hostname = seen.domain;
 	}

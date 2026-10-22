@@ -54,5 +54,6 @@ export function testContext(
 		clientKey: null,
 		listings: {},
 		agentSecret: "test-agent-secret",
+		agent: { webUrl: "http://localhost:3001" },
 	};
 }
