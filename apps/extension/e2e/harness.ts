@@ -32,14 +32,14 @@ const fixtureHtml = new Map(
 		readFileSync(new URL(`./fixtures/${name}.html`, import.meta.url), "utf8"),
 	]),
 );
-const webAppHtml = "<!doctype html><title>Cardmax web (fixture)</title>";
+const webAppHtml = "<!doctype html><title>Pointmaxx web (fixture)</title>";
 
 // Paths served for every fixture store: a product page and a checkout page
 // with the same markup. Any other path is a 404.
 const productPath = "/product/fixture";
 export const checkoutPath = "/checkout";
 
-// The Cardmax API the e2e bundle talks to (WXT_API_URL in build:e2e).
+// The Pointmaxx API the e2e bundle talks to (WXT_API_URL in build:e2e).
 export const apiOrigin = "https://api.cardmax.test";
 export const listingsUrl = `${apiOrigin}/api/rpc/listings/search`;
 
@@ -89,7 +89,7 @@ type Fixtures = {
 	extensionId: string;
 	// Requests to any host that is not a fixture. Must stay empty.
 	leaks: string[];
-	// Requests made by popup pages to anything but the Cardmax API. Must stay empty.
+	// Requests made by popup pages to anything but the Pointmaxx API. Must stay empty.
 	popupRequests: string[];
 	// Bodies POSTed to listings.search. Each test asserts exactly what it sent.
 	apiCalls: unknown[];
@@ -314,7 +314,7 @@ export const test = base.extend<Fixtures>({
 });
 
 // Privacy assertion for every test: nothing left for a non-fixture host, and
-// the popup made no request except to the Cardmax API.
+// the popup made no request except to the Pointmaxx API.
 test.afterEach(async ({ leaks, popupRequests }) => {
 	expect(leaks, "requests to non-fixture hosts").toEqual([]);
 	expect(popupRequests, "requests from the popup").toEqual([]);

@@ -1,4 +1,4 @@
-# Cardmax research (as of 2026-10-22)
+# Pointmaxx research (as of 2026-10-22)
 
 ## 1. CFPB data
 

@@ -111,7 +111,7 @@ export function Popup({ state }: { state: PopupState }) {
 			<div className="mk-popup-head">
 				<strong>
 					<Mark size={18} />
-					Cardmax
+					Pointmaxx
 				</strong>
 				<span className="mk-seg">
 					<span data-on={state !== "wallet" || undefined}>This page</span>
@@ -168,7 +168,7 @@ export function Popup({ state }: { state: PopupState }) {
 					</ul>
 					{state === "consent" ? (
 						<div className="mk-payload">
-							<small>Sends to api.cardmax.app</small>
+							<small>Sends to api.pointmaxx.ing</small>
 							<code>{JSON.stringify(query)}</code>
 							<span className="mk-actions">
 								<span className="mk-btn mk-btn-primary">Send</span>
@@ -198,7 +198,7 @@ const QUESTIONS = [
 function answer(domain: string): string {
 	const merchant = guessMerchant(domain);
 	const [best] = recommend(sampleWallet, catalog, merchant, 100);
-	if (!best) return "Add a card first at cardmax.app.";
+	if (!best) return "Add a card first at pointmaxx.ing.";
 	const card = catalog.find((c) => c.id === best.cardId);
 	const reason = best.reason.replace(/ \(up to .*\)$/, "");
 	const worth = card?.rewardCurrency === "points" ? "worth about" : "about";
@@ -243,7 +243,7 @@ export function Phone() {
 					<span className="mk-avatar">
 						<Mark size={36} />
 					</span>
-					<strong>Cardmax</strong>
+					<strong>Pointmaxx</strong>
 					<small>iMessage</small>
 				</div>
 				<div className="mk-phone-thread" aria-live="polite">
@@ -306,7 +306,7 @@ export function Dashboard() {
 	return (
 		<div className="mk-dash">
 			<aside>
-				<strong>Cardmax</strong>
+				<strong>Pointmaxx</strong>
 				<span data-on>Wallet</span>
 				<span>Text agent</span>
 				<span>Privacy</span>

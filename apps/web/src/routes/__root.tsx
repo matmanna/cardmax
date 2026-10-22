@@ -31,7 +31,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "Cardmax",
+				title: "Pointmaxx",
 			},
 			{ name: "theme-color", content: "#0A7A52" },
 		],

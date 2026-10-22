@@ -11,7 +11,7 @@ const STEPS = [
 	},
 	{
 		key: "store",
-		caption: "Cardmax reads the store and price from the page you're on.",
+		caption: "Pointmaxx reads the store and price from the page you're on.",
 	},
 	{
 		key: "match",

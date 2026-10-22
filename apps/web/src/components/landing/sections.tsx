@@ -13,7 +13,7 @@ export function Nav() {
 		<header className="lp-nav">
 			<span className="lp-wordmark">
 				<Mark />
-				Cardmax
+				Pointmaxx
 			</span>
 			<nav>
 				<a href="#product">Product</a>
@@ -34,7 +34,7 @@ export function Hero() {
 			<div className="lp-hero-copy">
 				<h1>Know which card to use at every checkout.</h1>
 				<p>
-					Cardmax looks at the store you're on and the cards you carry, then
+					Pointmaxx looks at the store you're on and the cards you carry, then
 					tells you which one earns the most. The math runs in your browser.
 				</p>
 				<div className="lp-hero-actions">
@@ -130,7 +130,7 @@ export function Product() {
 					)}
 					{active === "messages" && <Phone />}
 					{active === "dashboard" && (
-						<BrowserFrame url="cardmax.app/wallet" title="Wallet – Cardmax">
+						<BrowserFrame url="pointmaxx.ing/wallet" title="Wallet – Pointmaxx">
 							<Dashboard />
 						</BrowserFrame>
 					)}
@@ -169,7 +169,7 @@ const FAQ = [
 	],
 	[
 		"What if it guesses the store wrong?",
-		"Stores don't always code the way you'd expect. Cardmax shows how sure it is, and you can change the category in one tap. It remembers your fix.",
+		"Stores don't always code the way you'd expect. Pointmaxx shows how sure it is, and you can change the category in one tap. It remembers your fix.",
 	],
 	[
 		"Do I need an account?",
@@ -219,7 +219,7 @@ export function Footer() {
 			<div className="lp-footer-bar">
 				<span className="lp-wordmark lp-wordmark-small">
 					<Mark size={16} />
-					Cardmax
+					Pointmaxx
 				</span>
 				<nav>
 					<a href="#privacy">Privacy</a>

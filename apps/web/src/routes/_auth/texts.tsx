@@ -95,7 +95,7 @@ function RouteComponent() {
 							<code className="bg-muted rounded px-2 py-1 font-mono">
 								{linkCode.data.code}
 							</code>{" "}
-							to the Cardmax number. It works once and expires{" "}
+							to the Pointmaxx number. It works once and expires{" "}
 							{new Date(linkCode.data.expiresAt).toLocaleTimeString()}.
 						</p>
 					)}
@@ -188,9 +188,9 @@ function RouteComponent() {
 			</section>
 
 			<p className="text-muted-foreground text-sm">
-				Texts go through Twilio and your carrier, so they can read them. Cardmax
-				never asks for card numbers or amounts, and doesn't keep your messages
-				after replying.
+				Texts go through Twilio and your carrier, so they can read them.
+				Pointmaxx never asks for card numbers or amounts, and doesn't keep your
+				messages after replying.
 			</p>
 		</div>
 	);

@@ -40,7 +40,7 @@ export function sendToExtension(
 	}
 	if (!runtime?.sendMessage) {
 		return Promise.resolve({
-			error: "Cardmax extension not found. Install it in Chrome and reload.",
+			error: "Pointmaxx extension not found. Install it in Chrome and reload.",
 		});
 	}
 	return new Promise((resolve) => {

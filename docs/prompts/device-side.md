@@ -1,6 +1,6 @@
 # Agent prompt: device side (@matmanna)
 
-You are building the device side of Cardmax, a privacy-first credit card optimizer, for a four-hour hackathon on the personal agents and data privacy track. A teammate's agent is building the cloud side in parallel.
+You are building the device side of Pointmaxx, a privacy-first credit card optimizer, for a four-hour hackathon on the personal agents and data privacy track. A teammate's agent is building the cloud side in parallel.
 
 Read these first:
 - `docs/DECISIONS.md` covers the product, privacy rules, and what is cut.

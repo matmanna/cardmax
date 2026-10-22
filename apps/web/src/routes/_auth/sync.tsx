@@ -250,7 +250,7 @@ function PhonePanel() {
 					{pending && (
 						<p>
 							Text <strong className="font-mono text-lg">{pending.code}</strong>{" "}
-							to the Cardmax number. It expires at{" "}
+							to the Pointmaxx number. It expires at{" "}
 							{new Date(pending.expiresAt).toLocaleTimeString()}.
 						</p>
 					)}
