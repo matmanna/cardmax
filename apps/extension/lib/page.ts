@@ -1,4 +1,4 @@
-import type { PageRaw, PageSignals } from "@cardmax/core";
+import { type PageRaw, type PageSignals, signalsFromPage } from "@cardmax/core";
 
 export type ActiveTab = {
 	tabId: number;
@@ -65,5 +65,5 @@ export async function readActiveTab(): Promise<ActiveTab | null> {
 }
 
 export function pageSignals(raw: PageRaw): PageSignals {
-	return { title: raw.title || undefined, description: raw.meta.description };
+	return signalsFromPage(raw);
 }
