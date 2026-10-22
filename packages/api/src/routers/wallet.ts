@@ -48,7 +48,7 @@ export const walletRouter = {
 				.returning({ cards: wallet.cards, updatedAt: wallet.updatedAt });
 			return row;
 		}),
-	// Stop syncing: removes the server copy. The device wallet is untouched.
+	// "Remove from account": deletes the server copy. The device wallet is untouched.
 	delete: protectedProcedure.handler(async ({ context }) => {
 		await context.db
 			.delete(wallet)

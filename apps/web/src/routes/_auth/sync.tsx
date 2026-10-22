@@ -58,7 +58,7 @@ function RouteComponent() {
 		}),
 	);
 
-	const stopSyncing = useMutation(
+	const removeFromAccount = useMutation(
 		orpc.wallet.delete.mutationOptions({
 			onSuccess: () => {
 				toast.success("Removed the wallet from your account");
@@ -69,6 +69,13 @@ function RouteComponent() {
 	);
 
 	async function loadOntoDevice(wallet: WalletCard[]) {
+		if (
+			!window.confirm(
+				"Replace the cards on this device with your account copy?",
+			)
+		) {
+			return;
+		}
 		const reply = await sendToExtension(ENV.EXTENSION_ID, {
 			type: "cardmax:setWallet",
 			wallet,
@@ -140,10 +147,10 @@ function RouteComponent() {
 						<Button
 							type="button"
 							variant="destructive"
-							disabled={!account.data || stopSyncing.isPending}
-							onClick={() => stopSyncing.mutate({})}
+							disabled={!account.data || removeFromAccount.isPending}
+							onClick={() => removeFromAccount.mutate({})}
 						>
-							Stop syncing
+							Remove from account
 						</Button>
 					</div>
 				</section>
