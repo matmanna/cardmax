@@ -15,6 +15,7 @@
 		"@cardmax/core": "workspace:*",
 		"@cardmax/db": "workspace:*",
 		"drizzle-orm": "catalog:",
+		"twilio": "^6.2.0",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

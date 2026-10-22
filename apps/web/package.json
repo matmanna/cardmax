@@ -39,6 +39,7 @@
 		"react-dom": "^19.3.0",
 		"sonner": "catalog:",
 		"tailwindcss": "catalog:",
+		"twilio": "^6.2.0",
 		"varlock": "catalog:",
 		"zod": "catalog:"
 	},

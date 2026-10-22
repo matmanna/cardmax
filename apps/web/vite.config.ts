@@ -8,6 +8,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	server: {
 		port: 3001,
+		// Quick tunnels for testing the Twilio webhook against the dev server.
+		allowedHosts: [".trycloudflare.com"],
 	},
 	resolve: {
 		tsconfigPaths: true,
