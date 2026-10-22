@@ -17,7 +17,8 @@ export type IdentifyStore = (image: {
 	type: ImageType;
 }) => Promise<StoreGuess | null>;
 
-const system = `You identify retail stores from a photo of a storefront, sign, or logo.
+// Shared by every photo reader, so Claude and Gemini get identical instructions.
+export const storeIdentifierPrompt = `You identify retail stores from a photo of a storefront, sign, or logo.
 Return only the store's identity: its common name and its main US website domain (for example "target.com").
 Ignore people, faces, license plates, and any other text or objects in the frame, and never describe them.
 If no store is clearly identifiable, return name and domain as null with low confidence.`;
@@ -28,7 +29,7 @@ export function createStoreIdentifier(client = new Anthropic()): IdentifyStore {
 		const response = await client.messages.parse({
 			model: "claude-haiku-5-5",
 			max_tokens: 2048,
-			system,
+			system: storeIdentifierPrompt,
 			output_config: { effort: "low", format: zodOutputFormat(storeGuess) },
 			messages: [
 				{
@@ -63,4 +64,27 @@ export async function fetchDataUrl(
 	if (!match?.[1] || !match[2]) return null;
 	const bytes = Uint8Array.from(Buffer.from(match[2], "base64"));
 	return bytes.length <= maxImageBytes ? { bytes, type: match[1] } : null;
+}
+
+// Picks the photo reader from whichever key is configured. Gemini wins when
+// VISION_PROVIDER says so, or when it's the only key set.
+export async function selectStoreIdentifier(env: {
+	provider?: "anthropic" | "gemini";
+	anthropicKey?: string;
+	geminiKey?: string;
+	geminiModel?: string;
+}): Promise<IdentifyStore | undefined> {
+	const wantGemini =
+		env.provider === "gemini" || (!env.provider && !env.anthropicKey);
+	if (wantGemini && env.geminiKey) {
+		const { createGeminiStoreIdentifier } = await import("./gemini-vision");
+		return createGeminiStoreIdentifier(
+			env.geminiKey,
+			env.geminiModel || undefined,
+		);
+	}
+	if (env.anthropicKey) {
+		return createStoreIdentifier(new Anthropic({ apiKey: env.anthropicKey }));
+	}
+	return undefined;
 }

@@ -75,7 +75,12 @@ export async function handleInbound(
 		return unlinkedReply;
 	}
 
-	return answerFor(userId, inbound, { store, webUrl, fetchImage, identifyStore });
+	return answerFor(userId, inbound, {
+		store,
+		webUrl,
+		fetchImage,
+		identifyStore,
+	});
 }
 
 // The answer for a known user: a store name or a storefront photo in, the card

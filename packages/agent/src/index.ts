@@ -1,4 +1,5 @@
 export * from "./channel";
+export * from "./gemini-vision";
 export * from "./handle";
 export * from "./link-code";
 export * from "./merchant-text";
