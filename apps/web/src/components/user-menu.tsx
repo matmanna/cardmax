@@ -10,6 +10,7 @@ import {
 } from "@cardmax/ui/components/dropdown-menu";
 import { Skeleton } from "@cardmax/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -54,6 +55,33 @@ export default function UserMenu() {
 						}}
 					>
 						Sign Out
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						variant="destructive"
+						onClick={() => {
+							if (
+								!window.confirm(
+									"Delete your account and synced wallet? This cannot be undone.",
+								)
+							) {
+								return;
+							}
+							authClient.deleteUser({
+								fetchOptions: {
+									onSuccess: () => {
+										toast.success("Account and wallet deleted");
+										navigate({
+											to: "/",
+										});
+									},
+									onError: (error) => {
+										toast.error(error.error.message || error.error.statusText);
+									},
+								},
+							});
+						}}
+					>
+						Delete Account
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>

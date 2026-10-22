@@ -1,4 +1,5 @@
 import { Button } from "@cardmax/ui/components/button";
+import { Checkbox } from "@cardmax/ui/components/checkbox";
 import { Input } from "@cardmax/ui/components/input";
 import { Label } from "@cardmax/ui/components/label";
 import { useForm } from "@tanstack/react-form";
@@ -25,6 +26,7 @@ export default function SignUpForm({
 			email: "",
 			password: "",
 			name: "",
+			walletSyncConsent: false,
 		},
 		onSubmit: async ({ value }) => {
 			await authClient.signUp.email(
@@ -32,6 +34,7 @@ export default function SignUpForm({
 					email: value.email,
 					password: value.password,
 					name: value.name,
+					walletSyncConsent: value.walletSyncConsent,
 				},
 				{
 					onSuccess: () => {
@@ -51,6 +54,9 @@ export default function SignUpForm({
 				name: z.string().min(2, "Name must be at least 2 characters"),
 				email: z.email("Invalid email address"),
 				password: z.string().min(8, "Password must be at least 8 characters"),
+				walletSyncConsent: z.literal(true, {
+					error: "Accept wallet sync to create an account",
+				}),
 			}),
 		},
 	});
@@ -129,6 +135,33 @@ export default function SignUpForm({
 									onBlur={field.handleBlur}
 									onChange={(e) => field.handleChange(e.target.value)}
 								/>
+								{field.state.meta.errors.map((error) => (
+									<p key={error?.message} className="text-red-500">
+										{error?.message}
+									</p>
+								))}
+							</div>
+						)}
+					</form.Field>
+				</div>
+
+				<div>
+					<form.Field name="walletSyncConsent">
+						{(field) => (
+							<div className="space-y-2">
+								<div className="flex items-start gap-2">
+									<Checkbox
+										id={field.name}
+										name={field.name}
+										checked={field.state.value}
+										onCheckedChange={(checked) => field.handleChange(checked)}
+									/>
+									<Label htmlFor={field.name} className="leading-snug">
+										Sync my wallet to my account. The server can read which
+										cards I hold (issuer and product only, never numbers or
+										purchases).
+									</Label>
+								</div>
 								{field.state.meta.errors.map((error) => (
 									<p key={error?.message} className="text-red-500">
 										{error?.message}
