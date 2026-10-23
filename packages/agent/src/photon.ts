@@ -58,16 +58,29 @@ function firstDelivery(id: string): boolean {
 // and only returns once the reply is sent, because the SDK runs the message handler
 // fire-and-forget and a frozen function would drop it.
 export function createPhotonWebhook(config: PhotonConfig, reply: PhotonReply) {
-	const app = Spectrum({
-		projectId: config.projectId,
-		projectSecret: config.projectSecret,
-		webhookSecret: config.webhookSecret,
-		providers: [imessage.config()],
-		telemetry: false,
-	});
+	// Started on the first request, not at import: a failure here must not
+	// become an unhandled rejection that takes the whole function down.
+	let app: ReturnType<typeof Spectrum> | undefined;
+	const connect = () => {
+		app ??= Spectrum({
+			projectId: config.projectId,
+			projectSecret: config.projectSecret,
+			webhookSecret: config.webhookSecret,
+			providers: [imessage.config()],
+			telemetry: false,
+		});
+		return app;
+	};
 
 	return async (request: Request): Promise<Response> => {
-		const spectrum = await app;
+		let spectrum: Awaited<ReturnType<typeof Spectrum>>;
+		try {
+			spectrum = await connect();
+		} catch (error) {
+			app = undefined;
+			console.error("Photon connect failed", error);
+			return new Response("Photon unavailable", { status: 503 });
+		}
 		let work: Promise<void> | undefined;
 		let markStarted: () => void = () => {};
 		const started = new Promise<void>((resolve) => {
