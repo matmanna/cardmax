@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { listingsEndpoint, searchListings } from "@/lib/api";
 import type { Catalog } from "@/lib/catalog";
 import { type ActiveTab, pageSignals, readActiveTab } from "@/lib/page";
-import { type Settings, setOverride } from "@/lib/storage";
+import { type Settings, setOverride, updateWallet } from "@/lib/storage";
 
 import { SiteAccess } from "./SiteAccess";
 
@@ -98,6 +98,31 @@ export function PageTab({
 		settings.centsPerPoint,
 	);
 	const [best, ...rest] = ranked;
+
+	// The best card in the whole catalog for this store, offered when the wallet
+	// has nothing, or something worse. Same math, so it never contradicts "Pay with".
+	const [top] = recommend(
+		catalog.cards.map((card) => ({ cardId: card.id, addedAt: "" })),
+		catalog.cards,
+		merchant,
+		amount,
+		settings.centsPerPoint,
+	);
+	const suggestion =
+		top &&
+		!wallet.some((held) => held.cardId === top.cardId) &&
+		top.estimatedRewardUsd > (best?.estimatedRewardUsd ?? 0)
+			? top
+			: null;
+
+	async function addCard(cardId: string) {
+		await updateWallet((current) =>
+			current.some((card) => card.cardId === cardId)
+				? current
+				: [...current, { cardId, addedAt: new Date().toISOString() }],
+		);
+		onChange();
+	}
 
 	async function override(value: Category) {
 		if (!merchant) return;
@@ -213,6 +238,27 @@ export function PageTab({
 						Add your cards
 					</button>
 				</>
+			)}
+
+			{suggestion && (
+				<div className="suggest">
+					<span className="label">Best card for this store</span>
+					<div>
+						<span>
+							<strong>{cardName.get(suggestion.cardId)}</strong>
+							<small>
+								+{usd(suggestion.estimatedRewardUsd)} · {suggestion.reason}
+							</small>
+						</span>
+						<button
+							type="button"
+							className="secondary"
+							onClick={() => addCard(suggestion.cardId)}
+						>
+							Add
+						</button>
+					</div>
+				</div>
 			)}
 
 			{product && (
