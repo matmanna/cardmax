@@ -56,8 +56,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
 	// The landing page brings its own layout and nav; the app reuses its look.
+	// The signed-in screens have a sidebar instead of the header.
 	const isLanding = useRouterState({
 		select: (state) => state.location.pathname === "/",
+	});
+	const hasSidebar = useRouterState({
+		select: (state) =>
+			["/dashboard", "/sync", "/texts"].includes(state.location.pathname),
 	});
 
 	return (
@@ -70,7 +75,7 @@ function RootDocument() {
 					<Outlet />
 				) : (
 					<div className="platform grid min-h-svh grid-rows-[auto_1fr]">
-						<Header />
+						{!hasSidebar && <Header />}
 						<Outlet />
 					</div>
 				)}
