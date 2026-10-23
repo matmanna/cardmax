@@ -243,6 +243,67 @@ test.describe("recommendation", () => {
 	});
 });
 
+test.describe("store-specific cards", () => {
+	const wallet = [
+		"citi-double-cash",
+		"my-best-buy-credit-card",
+		"target-circle-card",
+		"onepay-cashrewards",
+	];
+
+	for (const [store, card, reward] of [
+		["bestbuy", "My Best Buy Credit Card", "\\+\\$17\\.50"],
+		["target", "Target Circle Card", "\\+\\$4\\.45"],
+		["walmart", "OnePay CashRewards Card", "\\+\\$3\\.87"],
+	] as const) {
+		test(`${store} checkout picks ${card}`, async ({
+			openPopupFor,
+			openStore,
+			seedWallet,
+		}) => {
+			await seedWallet(wallet);
+			const popup = await openPopupFor(await openStore(store, checkoutPath));
+			await expect(popup.getByRole("main")).toContainText(
+				new RegExp(`Pay with\\s*.*${card}\\s*${reward}`),
+			);
+			// Everything held already, so no suggestion to add.
+			await expect(popup.getByText("Best card for this store")).toHaveCount(0);
+		});
+	}
+
+	test("an empty wallet suggests the store's card and Add puts it in the wallet", async ({
+		openPopupFor,
+		openStore,
+	}) => {
+		const popup = await openPopupFor(await openStore("target"));
+		await expect(popup.getByText("Best card for this store")).toBeVisible();
+		await expect(popup.locator(".suggest")).toContainText("Target Circle Card");
+		await popup.getByRole("button", { name: "Add", exact: true }).click();
+		await expect(
+			popup.getByRole("button", { name: "Wallet (1)" }),
+		).toBeVisible();
+		await expect(popup.getByRole("main")).toContainText(
+			/Pay with\s*Target Circle Card\s*\+\$4\.45/,
+		);
+		await expect(popup.getByText("Best card for this store")).toHaveCount(0);
+	});
+
+	test("a wallet without a store card suggests one that beats it", async ({
+		openPopupFor,
+		openStore,
+		seedWallet,
+	}) => {
+		await seedWallet(["citi-double-cash"]);
+		const popup = await openPopupFor(await openStore("walmart"));
+		await expect(popup.locator(".suggest")).toContainText(
+			"OnePay CashRewards Card",
+		);
+		await expect(popup.getByRole("main")).toContainText(
+			/Pay with\s*Citi Double Cash/,
+		);
+	});
+});
+
 test.describe("compare at other stores", () => {
 	test.beforeEach(async ({ seedWallet }) => {
 		await seedWallet(["citi-double-cash", "amex-gold"]);
