@@ -12,6 +12,8 @@ const e2eHosts = [
 	"https://www.target.com/*",
 	"https://www.amazon.com/*",
 	"https://www.costco.com/*",
+	// The fixture web app, so a test can check it is never read as a store.
+	"http://localhost:3001/*",
 ];
 
 // Public half of the extension signing key. It pins the extension ID to

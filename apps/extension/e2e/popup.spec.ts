@@ -6,6 +6,7 @@ import {
 	listingsUrl,
 	type SwGlobal,
 	test,
+	webOrigin,
 } from "./harness";
 
 // From e2e/fixtures/bestbuy.html.
@@ -140,6 +141,22 @@ test.describe("starting tab", () => {
 	}) => {
 		const popup = await openPopupFor();
 		await expect(pressed(popup, /^Wallet/)).toBeVisible();
+	});
+
+	test("the Pointmaxx web app is never read as a store", async ({
+		context,
+		openPopupFor,
+		seedWallet,
+	}) => {
+		await seedWallet(["citi-double-cash"]);
+		const web = await context.newPage();
+		await web.goto(`${webOrigin}/sync`);
+		const popup = await openPopupFor(web);
+		await popup.getByRole("button", { name: "This page" }).click();
+		await expect(
+			popup.getByText("Open a store page to get a card suggestion."),
+		).toBeVisible();
+		await expect(popup.getByRole("switch")).toHaveCount(0);
 	});
 
 	test("a wallet syncing in after open does not move the tab", async ({
