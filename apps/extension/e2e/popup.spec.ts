@@ -93,6 +93,8 @@ test.describe("wallet", () => {
 		);
 		expect(stored).toEqual({
 			settings: { sendsEnabled: false, centsPerPoint: 1, overrides: {} },
+			// Keeps the starter cards from coming back after a revoke.
+			seeded: true,
 		});
 
 		// The page tab offers no lookup while sends are off.
