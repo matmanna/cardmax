@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 // Shared frame for the signed-in screens (Paper: Platform).
 export function Page({ children }: { children: ReactNode }) {
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-10 py-8">
+		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 md:px-10 md:py-8">
 			{children}
 		</div>
 	);
@@ -37,12 +37,14 @@ export function PageHeader({
 export function Panel({
 	title,
 	action,
+	dot,
 	tone = "outline",
 	className,
 	children,
 }: {
 	title?: string;
 	action?: ReactNode;
+	dot?: "ok" | "idle";
 	tone?: "outline" | "muted";
 	className?: string;
 	children: ReactNode;
@@ -56,9 +58,20 @@ export function Panel({
 			)}
 		>
 			{(title || action) && (
-				<div className="flex items-center justify-between gap-3">
+				<div className="flex flex-wrap items-center justify-between gap-3">
 					{title && (
-						<h2 className="text-sm leading-5 font-semibold">{title}</h2>
+						<h2 className="flex items-center gap-2 text-sm leading-5 font-semibold">
+							{dot && (
+								<span
+									aria-hidden
+									className={cn(
+										"size-2 rounded-full",
+										dot === "ok" ? "bg-(--brand)" : "bg-(--highlight)",
+									)}
+								/>
+							)}
+							{title}
+						</h2>
 					)}
 					{action}
 				</div>

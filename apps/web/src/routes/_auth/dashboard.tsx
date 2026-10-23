@@ -2,6 +2,8 @@ import {
 	catalog as bundledCatalog,
 	type CardProduct,
 	type Category,
+	guessMerchant,
+	recommend,
 	type WalletCard,
 } from "@cardmax/core";
 import { Button } from "@cardmax/ui/components/button";
@@ -36,20 +38,18 @@ function rate(card: CardProduct, multiplier: number) {
 	return card.rewardCurrency === "cash" ? `${multiplier}%` : `${multiplier}x`;
 }
 
-// "3% dining, 3% drugstore, 1.5% everything else"
+// "3% dining, 3% drugstore, 1.5% everything else". Store-only rules read
+// "5% at target.com", and a 0% base is left out.
 function earns(card: CardProduct) {
-	const parts = card.rules
-		.filter((rule) => !rule.onlyMerchants)
-		.map(
-			(rule) =>
-				`${rate(card, rule.multiplier)} ${categoryLabels[rule.category]}`,
-		);
-	const merchants = card.rules.filter((rule) => rule.onlyMerchants).length;
-	if (merchants)
-		parts.push(`${merchants} merchant bonus${merchants > 1 ? "es" : ""}`);
-	parts.push(
-		`${rate(card, card.baseMultiplier)} everything${parts.length ? " else" : ""}`,
+	const parts = card.rules.map((rule) =>
+		rule.onlyMerchants
+			? `${rate(card, rule.multiplier)} at ${rule.onlyMerchants.join(", ")}`
+			: `${rate(card, rule.multiplier)} ${categoryLabels[rule.category]}`,
 	);
+	if (card.baseMultiplier > 0)
+		parts.push(
+			`${rate(card, card.baseMultiplier)} everything${parts.length ? " else" : ""}`,
+		);
 	return parts.join(", ");
 }
 
@@ -57,23 +57,91 @@ function fee(card: CardProduct) {
 	return `$${card.annualFeeUsd}`;
 }
 
-const spotlight: { label: string; category: Category }[] = [
-	{ label: "Dining", category: "dining" },
-	{ label: "Groceries", category: "grocery" },
-	{ label: "Drugstores", category: "drugstore" },
-	{ label: "Everything else", category: "other" },
-];
+const stores = [
+	{ label: "Best Buy", domain: "bestbuy.com", amount: 1199.99 },
+	{ label: "Target", domain: "target.com", amount: 64.2 },
+	{ label: "Walmart", domain: "walmart.com", amount: 112.5 },
+	{ label: "Whole Foods", domain: "wholefoodsmarket.com", amount: 86.4 },
+	{ label: "DoorDash", domain: "doordash.com", amount: 42.18 },
+	{ label: "CVS", domain: "cvs.com", amount: 31.75 },
+] as const;
 
-function bestFor(cards: CardProduct[], category: Category) {
-	let best: { card: CardProduct; multiplier: number } | undefined;
-	for (const card of cards) {
-		const rule = card.rules.find(
-			(r) => r.category === category && !r.onlyMerchants,
-		);
-		const multiplier = rule?.multiplier ?? card.baseMultiplier;
-		if (!best || multiplier > best.multiplier) best = { card, multiplier };
-	}
-	return best;
+const usd = (value: number) =>
+	value.toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+function BestCardAt({
+	owned,
+	products,
+}: {
+	owned: WalletCard[];
+	products: CardProduct[];
+}) {
+	const [index, setIndex] = useState(0);
+	const store = stores[index] ?? stores[0];
+	const ranked = recommend(
+		owned,
+		products,
+		guessMerchant(store.domain),
+		store.amount,
+	);
+	const [best, ...rest] = ranked;
+	const name = (cardId: string) => {
+		const card = products.find((item) => item.id === cardId);
+		return card ? cardLabel(card) : cardId;
+	};
+
+	return (
+		<Panel
+			title="Best card at"
+			tone="muted"
+			action={
+				<div className="flex flex-wrap gap-1.5 md:justify-end">
+					{stores.map((item, i) => (
+						<button
+							key={item.domain}
+							type="button"
+							aria-pressed={i === index}
+							onClick={() => setIndex(i)}
+							className="bg-background text-foreground aria-pressed:bg-foreground aria-pressed:text-background rounded-full px-2.5 py-1 text-[13px] leading-[18px]"
+						>
+							{item.label}
+						</button>
+					))}
+				</div>
+			}
+		>
+			{best && (
+				<div className="bg-background flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-(--brand) px-3.5 py-3">
+					<div>
+						<div className="text-sm leading-5 font-semibold">
+							{name(best.cardId)}
+						</div>
+						<div className="text-muted-foreground text-[13px] leading-[18px]">
+							{best.reason}
+						</div>
+					</div>
+					<div className="text-right text-sm leading-5 font-semibold text-(--brand-ink)">
+						{usd(best.estimatedRewardUsd)} on {usd(store.amount)}
+					</div>
+				</div>
+			)}
+			{rest.length > 0 && (
+				<ul className="divide-border divide-y px-3.5">
+					{rest.map((item) => (
+						<li
+							key={item.cardId}
+							className="flex justify-between gap-4 py-2 text-[13px] leading-[18px]"
+						>
+							<span>{name(item.cardId)}</span>
+							<span className="text-muted-foreground">
+								{usd(item.estimatedRewardUsd)}
+							</span>
+						</li>
+					))}
+				</ul>
+			)}
+		</Panel>
+	);
 }
 
 const cardLabel = (card: CardProduct) => `${card.issuer} ${card.name}`;
@@ -184,39 +252,48 @@ function RouteComponent() {
 			{account.isPending ? (
 				<p className="text-muted-foreground text-sm">Loading…</p>
 			) : ownedCards.length ? (
-				<table className="w-full text-left text-sm">
-					<thead>
-						<tr className="text-muted-foreground border-b text-[13px] font-medium">
-							<th className="w-75 py-2 font-medium">Card</th>
-							<th className="w-85 py-2 font-medium">Earns</th>
-							<th className="w-20 py-2 font-medium">Fee</th>
-							<th className="w-30 py-2 font-medium">Terms checked</th>
-							<th />
-						</tr>
-					</thead>
-					<tbody>
+				<div className="text-sm">
+					<div
+						className="text-muted-foreground hidden gap-x-4 border-b py-2 text-[13px] leading-[18px] font-medium md:grid md:grid-cols-[300px_minmax(0,1fr)_80px_120px_64px]"
+						aria-hidden
+					>
+						<span>Card</span>
+						<span>Earns</span>
+						<span>Fee</span>
+						<span>Terms checked</span>
+					</div>
+					<ul>
 						{ownedCards.map((card) => (
-							<tr key={card.id} className="border-b">
-								<td className="py-3 pr-4 font-medium">{cardLabel(card)}</td>
-								<td className="text-muted-foreground py-3 pr-4">
+							<li
+								key={card.id}
+								className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 border-b py-3 leading-5 md:grid-cols-[300px_minmax(0,1fr)_80px_120px_64px] md:items-center"
+							>
+								<span className="font-medium">{cardLabel(card)}</span>
+								<span className="text-muted-foreground col-span-2 row-start-2 md:col-span-1 md:row-start-auto">
 									{earns(card)}
-								</td>
-								<td className="py-3">{fee(card)}</td>
-								<td className="text-muted-foreground py-3">{card.checkedOn}</td>
-								<td className="py-3 text-right">
-									<button
-										type="button"
-										className="text-muted-foreground hover:text-foreground disabled:opacity-50"
-										disabled={save.isPending}
-										onClick={() => remove(card.id)}
-									>
-										Remove
-									</button>
-								</td>
-							</tr>
+								</span>
+								<span className="text-muted-foreground md:text-foreground col-span-2 row-start-3 text-[13px] md:col-span-1 md:row-start-auto md:text-sm">
+									{fee(card)}
+									<span className="md:hidden">
+										{" "}
+										annual fee · terms checked {card.checkedOn}
+									</span>
+								</span>
+								<span className="text-muted-foreground hidden md:inline">
+									{card.checkedOn}
+								</span>
+								<button
+									type="button"
+									className="text-muted-foreground hover:text-foreground col-start-2 row-start-1 text-right disabled:opacity-50 md:col-start-auto md:row-start-auto"
+									disabled={save.isPending}
+									onClick={() => remove(card.id)}
+								>
+									Remove
+								</button>
+							</li>
 						))}
-					</tbody>
-				</table>
+					</ul>
+				</div>
 			) : (
 				<p className="text-muted-foreground border-b pb-3 text-sm">
 					No cards yet. Add the cards you carry.
@@ -224,78 +301,67 @@ function RouteComponent() {
 			)}
 
 			<div className="grid gap-4 md:grid-cols-2">
-				<Panel title="Chrome extension">
-					<p className="text-muted-foreground text-[13px] leading-[18px]">
-						{chrome === "synced" && "Synced with your account."}
-						{chrome === "out-of-sync" &&
-							"Installed, but its cards differ from your account."}
-						{chrome === "unavailable" && "Not detected in this browser."}
-						{chrome === "loading" && "Checking…"}{" "}
-						<Link to="/sync" className="text-foreground underline">
+				<Panel
+					title="Chrome"
+					dot={chrome === "synced" ? "ok" : "idle"}
+					action={
+						<Link to="/sync" className="text-[13px] leading-[18px]">
 							Manage sync
 						</Link>
+					}
+				>
+					<p className="text-muted-foreground text-[13px] leading-[18px]">
+						{chrome === "synced" &&
+							`Synced. The extension has the same ${count}.`}
+						{chrome === "out-of-sync" &&
+							"Installed, but its cards differ from your account."}
+						{chrome === "unavailable" &&
+							"Extension not detected in this browser."}
+						{chrome === "loading" && "Checking…"}
 					</p>
 				</Panel>
-				<Panel title="Text agent">
+				<Panel
+					title="Texts"
+					dot={phone.data?.linked ? "ok" : "idle"}
+					action={
+						<Link to="/texts" className="text-[13px] leading-[18px]">
+							Open
+						</Link>
+					}
+				>
 					{phone.data?.linked ? (
 						<p className="text-muted-foreground text-[13px] leading-[18px]">
-							(•••) •••-{phone.data.last4} · linked{" "}
-							{new Date(phone.data.linkedAt).toLocaleDateString()}.{" "}
-							<Link to="/texts" className="text-foreground underline">
-								Open
-							</Link>
+							Linked to (•••) •••-{phone.data.last4} on{" "}
+							{new Date(phone.data.linkedAt).toLocaleDateString()}.
 						</p>
 					) : (
-						<div className="text-muted-foreground flex flex-wrap items-center gap-3 text-[13px] leading-[18px]">
+						<div className="text-muted-foreground flex flex-wrap items-center gap-2 text-[13px] leading-[18px]">
 							{linkCode.data ? (
 								<span>
 									Text{" "}
-									<code className="bg-muted text-foreground rounded px-1.5 py-0.5 font-mono">
+									<code className="bg-muted text-foreground rounded px-1.5 py-px font-mono">
 										{linkCode.data.code}
 									</code>{" "}
-									to the Pointmaxx number.
+									to the Pointmaxx number to link.
 								</span>
 							) : (
 								<span>No phone linked.</span>
 							)}
-							<Button
+							<button
 								type="button"
-								variant="outline"
-								className="h-8 rounded-lg px-3 text-sm"
+								className="text-foreground underline disabled:opacity-50"
 								disabled={linkCode.isPending}
 								onClick={() => linkCode.mutate({})}
 							>
 								{linkCode.data ? "New code" : "Get link code"}
-							</Button>
-							<Link to="/texts" className="text-foreground underline">
-								Open
-							</Link>
+							</button>
 						</div>
 					)}
 				</Panel>
 			</div>
 
 			{ownedCards.length > 0 && (
-				<Panel title="Which card where" tone="muted">
-					<div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-						{spotlight.map(({ label, category }) => {
-							const best = bestFor(ownedCards, category);
-							return (
-								<div
-									key={category}
-									className="bg-background rounded-lg px-3 py-2.5 text-[13px] leading-[18px]"
-								>
-									<div className="text-muted-foreground">{label}</div>
-									<div className="font-medium">
-										{best
-											? `${best.card.name} · ${rate(best.card, best.multiplier)}`
-											: "—"}
-									</div>
-								</div>
-							);
-						})}
-					</div>
-				</Panel>
+				<BestCardAt owned={owned} products={products} />
 			)}
 		</Page>
 	);
