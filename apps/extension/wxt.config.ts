@@ -9,6 +9,7 @@ const e2e = Boolean(process.env.WXT_E2E);
 const e2eHosts = [
 	"https://www.bestbuy.com/*",
 	"https://www.walmart.com/*",
+	"https://www.target.com/*",
 	"https://www.amazon.com/*",
 	"https://www.costco.com/*",
 ];
