@@ -10,7 +10,12 @@ import {
 import { getCatalog, refreshCatalog } from "@/lib/catalog";
 import { webOrigin } from "@/lib/origins";
 import { collect, pageSignals } from "@/lib/page";
-import { getSettings, getWallet, setWallet } from "@/lib/storage";
+import {
+	getSettings,
+	getWallet,
+	seedStarterWallet,
+	setWallet,
+} from "@/lib/storage";
 import {
 	connect,
 	disconnect,
@@ -213,7 +218,10 @@ export default defineBackground(() => {
 				}
 			},
 		);
-	refresh();
+	seedStarterWallet()
+		.then((seeded) => seeded && log("seeded starter cards"))
+		.catch((error) => log("seed failed:", String(error)))
+		.then(refresh);
 
 	// The popup and nothing else may ask for a pull.
 	browser.runtime.onMessage.addListener((message, sender) => {

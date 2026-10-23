@@ -84,5 +84,32 @@ export async function revokeAll(): Promise<void> {
 	await browser.storage.local.clear();
 	await browser.storage.local.set({
 		settings: { ...defaults, sendsEnabled: false },
+		// A revoked device never gets the starter cards back.
+		seeded: true,
 	});
+}
+
+// Common cards a new install starts with, so the first store already shows a
+// pick. They live only on this device and can be removed in the Wallet tab.
+export const starterCards = [
+	"citi-double-cash",
+	"chase-freedom-unlimited",
+	"amex-gold",
+];
+
+// Seeds an empty wallet once per install. Never after a revoke, and never in
+// the e2e build, whose tests start from an empty wallet.
+export async function seedStarterWallet(): Promise<boolean> {
+	if (import.meta.env.WXT_E2E) return false;
+	const { seeded } = await browser.storage.local.get("seeded");
+	if (seeded) return false;
+	await browser.storage.local.set({ seeded: true });
+	const [wallet, { sendsEnabled }] = await Promise.all([
+		getWallet(),
+		getSettings(),
+	]);
+	if (wallet.length > 0 || !sendsEnabled) return false;
+	const addedAt = new Date().toISOString();
+	await setWallet(starterCards.map((cardId) => ({ cardId, addedAt })));
+	return true;
 }

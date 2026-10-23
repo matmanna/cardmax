@@ -116,8 +116,8 @@ test("an auto-opened popup shows the checkout the background read", async ({
 	await seedWallet(["citi-double-cash"]);
 	// A tab Pointmaxx can't read or even see the URL of, like an auto-opened
 	// popup's tab without an activeTab grant.
+	// A blank tab works: the build has no host access to it.
 	const page = await context.newPage();
-	await page.goto(`${webOrigin}/`);
 	await page.bringToFront();
 	const tabId = await serviceWorker.evaluate(async () => {
 		const { chrome } = globalThis as unknown as SwGlobal & {

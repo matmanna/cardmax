@@ -1,6 +1,8 @@
 import { type PageRaw, type PageSignals, signalsFromPage } from "@cardmax/core";
 import { z } from "zod";
 
+import { webOrigin } from "./origins";
+
 export type ActiveTab = {
 	tabId: number;
 	url: string;
@@ -39,8 +41,28 @@ async function targetTab(): Promise<Browser.tabs.Tab | undefined> {
 		const id = Number(new URLSearchParams(location.search).get("tab"));
 		if (Number.isInteger(id) && id > 0) return browser.tabs.get(id);
 	}
-	const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-	return tab;
+	// The popup's own window first, then the last focused one. A tab showing
+	// the Pointmaxx web app is never the store, for example in a split view.
+	const found = new Map<number, Browser.tabs.Tab>();
+	for (const query of [
+		{ active: true, currentWindow: true },
+		{ active: true, lastFocusedWindow: true },
+	]) {
+		for (const tab of await browser.tabs.query(query)) {
+			if (tab.id !== undefined && !found.has(tab.id)) found.set(tab.id, tab);
+		}
+	}
+	const tabs = [...found.values()];
+	return tabs.find((tab) => !isWebApp(tab.url)) ?? tabs[0];
+}
+
+function isWebApp(url: string | undefined): boolean {
+	if (!url) return false;
+	try {
+		return new URL(url).origin === webOrigin;
+	} catch {
+		return false;
+	}
 }
 
 // What the background read at checkout, for when the popup can't read the page.
@@ -67,6 +89,7 @@ export async function readActiveTab(): Promise<ActiveTab | null> {
 	const tab = await targetTab();
 	if (tab?.id === undefined) return null;
 	if (!tab.url) return fromBackground(tab.id);
+	if (isWebApp(tab.url)) return null;
 	const url = new URL(tab.url);
 	if (url.protocol !== "http:" && url.protocol !== "https:") return null;
 	try {
