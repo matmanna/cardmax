@@ -9,12 +9,13 @@ import type { Inbound } from "./channel";
 import { parseLinkCode } from "./link-code";
 import { merchantFromText } from "./merchant-text";
 import {
+	addCardsHint,
 	badCodeReply,
-	emptyWalletReply,
 	linkedReply,
 	notLinkedReply,
 	photoPrefix,
 	photoUnclearReply,
+	privacyNotice,
 	recommendationReply,
 	tooManyTriesReply,
 	unknownMerchantReply,
@@ -68,7 +69,13 @@ export async function handleInbound(
 		return linkedReply();
 	}
 
-	if (!userId) return notLinkedReply(webUrl);
+	if (!userId) {
+		// Store names work without an account: rank the whole catalog. Photos
+		// cost a vision call, so they still need a linked number.
+		const hostname = merchantFromText(text);
+		if (!hostname || inbound.imageUrl) return notLinkedReply(webUrl);
+		return `${catalogReply(hostname)}\n${addCardsHint(webUrl)} ${privacyNotice}`;
+	}
 
 	if (/^\s*unlink\s*$/i.test(text)) {
 		await store.unlinkPhone(inbound.from);
@@ -101,13 +108,26 @@ export async function answerFor(
 	}
 	if (!hostname) return unknownMerchantReply;
 
+	// With no saved cards, rank the whole catalog instead of asking for a sync.
 	const wallet = await store.walletFor(userId);
-	if (!wallet.length) return emptyWalletReply(webUrl);
+	const reply = wallet.length
+		? walletReply(hostname, wallet)
+		: `${catalogReply(hostname)}\n${addCardsHint(webUrl)}`;
+	return seen ? `${photoPrefix(seen)}\n${reply}` : reply;
+}
 
+function walletReply(hostname: string, wallet: WalletCard[]): string {
 	const merchant = guessMerchant(hostname);
 	const ranked = recommend(wallet, catalog, merchant, perHundred);
-	const reply = recommendationReply(merchant, ranked, catalog);
-	return seen ? `${photoPrefix(seen)}\n${reply}` : reply;
+	return recommendationReply(merchant, ranked, catalog);
+}
+
+function catalogReply(hostname: string): string {
+	const everyCard = catalog.map((card) => ({
+		cardId: card.id,
+		addedAt: new Date(0).toISOString(),
+	}));
+	return walletReply(hostname, everyCard);
 }
 
 // Download, strip metadata, then identify. The bytes live only in this call.

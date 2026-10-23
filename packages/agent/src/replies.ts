@@ -7,7 +7,7 @@ export const privacyNotice =
 export const disclaimer = "Rewards math, not financial advice.";
 
 export function notLinkedReply(webUrl: string): string {
-	return `Hi, this is Pointmaxx. To link this number, open ${webUrl}/sync, get a 6-digit code, and text it here. ${privacyNotice}`;
+	return `Hi, this is Pointmaxx. To link this number, open ${webUrl}/texts, get a 6-digit code, and text it here. ${privacyNotice}`;
 }
 
 export const badCodeReply =
@@ -37,8 +37,9 @@ export function photoPrefix(seen: { name: string | null; confidence: string }) {
 		: `${prefix} Wrong store? Reply with its name.`;
 }
 
-export function emptyWalletReply(webUrl: string): string {
-	return `Your synced wallet is empty. Add cards in the Pointmaxx extension, then press "Save to account" at ${webUrl}/sync.`;
+// Appended to answers that came from the whole catalog, not the user's own cards.
+export function addCardsHint(webUrl: string): string {
+	return `To compare only the cards you carry, add them at ${webUrl}/dashboard.`;
 }
 
 const categoryLabel: Record<MerchantGuess["category"], string> = {

@@ -42,8 +42,8 @@ const send = (store: AgentStore, text: string, from = "+15550001234") =>
 describe("linking", () => {
 	test("an unknown number gets link instructions and the privacy notice", async () => {
 		const { store } = fakeStore({});
-		const reply = await send(store, "costco");
-		expect(reply).toContain(`${webUrl}/sync`);
+		const reply = await send(store, "hello");
+		expect(reply).toContain(`${webUrl}/texts`);
 		expect(reply).toContain(privacyNotice);
 	});
 
@@ -106,9 +106,21 @@ describe("recommendations", () => {
 		expect(await send(store, "zzqx")).toContain("Text its website");
 	});
 
-	test("points to sync when the wallet is empty", async () => {
+	test("ranks the whole catalog when the wallet is empty, without asking for a sync", async () => {
 		const store = linked([]);
-		expect(await send(store, "costco")).toContain(`${webUrl}/sync`);
+		const reply = await send(store, "target");
+		expect(reply).toContain("Top earner");
+		expect(reply).toContain("Target Circle Card");
+		expect(reply).toContain(`${webUrl}/dashboard`);
+		expect(reply).not.toContain("/sync");
+	});
+
+	test("answers a store name for an unlinked number from the catalog", async () => {
+		const store = { ...linked([]), userForPhone: async () => null };
+		const reply = await send(store, "costco");
+		expect(reply).toContain("Top earner");
+		expect(reply).toContain(`${webUrl}/dashboard`);
+		expect(reply).toContain(privacyNotice);
 	});
 
 	test("replies never tell the user what to do with money", async () => {
