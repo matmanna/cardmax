@@ -8,6 +8,7 @@ import {
 } from "@cardmax/core";
 
 import { getCatalog, refreshCatalog } from "@/lib/catalog";
+import { webOrigin } from "@/lib/origins";
 import { collect, pageSignals } from "@/lib/page";
 import { getSettings, getWallet, setWallet } from "@/lib/storage";
 import {
@@ -17,11 +18,6 @@ import {
 	pullFromAccount,
 	pushToAccount,
 } from "@/lib/sync";
-
-// Same fallback as externally_connectable in wxt.config.ts.
-const webOrigin =
-	(import.meta.env.WXT_WEB_ORIGIN as string | undefined) ??
-	"http://localhost:3001";
 
 type Reply = { wallet: WalletCard[] } | { ok: true } | { error: string };
 

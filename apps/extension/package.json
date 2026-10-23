@@ -8,7 +8,7 @@
 		"dev": "wxt --port 5555",
 		"dev:firefox": "wxt -b firefox",
 		"build": "wxt build",
-		"build:e2e": "WXT_E2E=1 WXT_API_URL=https://api.cardmax.test wxt build",
+		"build:e2e": "WXT_E2E=1 WXT_API_URL=https://api.cardmax.test WXT_WEB_ORIGIN=http://localhost:3001 wxt build",
 		"build:firefox": "wxt build -b firefox",
 		"zip": "wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
