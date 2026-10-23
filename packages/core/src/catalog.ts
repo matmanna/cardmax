@@ -179,4 +179,82 @@ export const catalog: CardProduct[] = [
 			"https://creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards",
 		checkedOn: "2026-10-22",
 	},
+	{
+		// Rotating 5% quarterly categories are left out: they need activation each
+		// quarter, are capped, and the current one excludes Walmart and Target.
+		// Chase Travel portal earn is left out too.
+		id: "chase-freedom-flex",
+		issuer: "Chase",
+		name: "Freedom Flex",
+		rewardCurrency: "cash",
+		annualFeeUsd: 0,
+		baseMultiplier: 1,
+		rules: [
+			{ category: "dining", multiplier: 3, excludesMerchants: [] },
+			{ category: "drugstore", multiplier: 3, excludesMerchants: [] },
+		],
+		sourceUrl:
+			"https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
+		checkedOn: "2026-10-22",
+	},
+	{
+		// 5% off at checkout, credit or debit. Store only: no rate elsewhere.
+		id: "target-circle-card",
+		issuer: "Target",
+		name: "Circle Card",
+		rewardCurrency: "cash",
+		annualFeeUsd: 0,
+		baseMultiplier: 0,
+		rules: [
+			{
+				category: "online_retail",
+				multiplier: 5,
+				excludesMerchants: [],
+				onlyMerchants: ["target.com"],
+			},
+		],
+		sourceUrl: "https://www.target.com/redcard/about",
+		checkedOn: "2026-10-22",
+	},
+	{
+		// The 5% is points redeemed as reward certificates ($5 per $100). Citi
+		// lists the annual fee as $0-59 by creditworthiness; $0 is the low end.
+		id: "my-best-buy-credit-card",
+		issuer: "Citi",
+		name: "My Best Buy Credit Card",
+		rewardCurrency: "cash",
+		annualFeeUsd: 0,
+		baseMultiplier: 0,
+		rules: [
+			{
+				category: "online_retail",
+				multiplier: 5,
+				excludesMerchants: [],
+				onlyMerchants: ["bestbuy.com"],
+			},
+		],
+		sourceUrl: "https://www.citi.com/credit-cards/citi-best-buy-credit-cards",
+		checkedOn: "2026-10-22",
+	},
+	{
+		// Replaces the Capital One Walmart Rewards card, closed to new applicants
+		// since May 2024. 3% at Walmart is the non-member rate (5% with Walmart+).
+		// Rewards are OnePay Points, valued as cash.
+		id: "onepay-cashrewards",
+		issuer: "OnePay",
+		name: "CashRewards Card",
+		rewardCurrency: "cash",
+		annualFeeUsd: 0,
+		baseMultiplier: 1.5,
+		rules: [
+			{
+				category: "online_retail",
+				multiplier: 3,
+				excludesMerchants: [],
+				onlyMerchants: ["walmart.com"],
+			},
+		],
+		sourceUrl: "https://www.onepay.com/credit-card",
+		checkedOn: "2026-10-22",
+	},
 ];

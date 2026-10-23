@@ -452,3 +452,26 @@ nav button[aria-pressed="true"] {
 	text-decoration: none;
 	cursor: pointer;
 }
+
+/* Suggestion */
+
+.suggest {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px 20px 0;
+}
+
+.suggest > div {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+}
+
+.suggest small {
+	display: block;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--muted);
+}

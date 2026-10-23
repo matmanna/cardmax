@@ -21,6 +21,7 @@ export const webOrigin = "http://localhost:3001";
 const stores = {
 	bestbuy: "www.bestbuy.com",
 	walmart: "www.walmart.com",
+	target: "www.target.com",
 	amazon: "www.amazon.com",
 	costco: "www.costco.com",
 } as const;
