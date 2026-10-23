@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { recommend } from "./recommend";
+import { catalog as cards } from "./catalog";
+import { guessMerchant } from "./merchants";
+import { recommend, suggestCard } from "./recommend";
 import type { CardProduct, MerchantGuess, WalletCard } from "./schema";
 
 const flat: CardProduct = {
@@ -157,5 +159,22 @@ describe("reason wording", () => {
 		expect(reason("grocer-4x")).toBe(
 			"4x points on grocery (up to $25,000 a year)",
 		);
+	});
+});
+
+describe("suggestCard", () => {
+	const target = guessMerchant("www.target.com");
+	test("offers the best catalog card when the wallet holds something worse", () => {
+		const held = [{ cardId: "citi-double-cash", addedAt: "" }];
+		expect(suggestCard(held, cards, target, 100)?.cardId).toBe(
+			"target-circle-card",
+		);
+	});
+	test("offers nothing when the wallet already holds the best card", () => {
+		const held = [{ cardId: "target-circle-card", addedAt: "" }];
+		expect(suggestCard(held, cards, target, 100)).toBeNull();
+	});
+	test("offers the best catalog card for an empty wallet", () => {
+		expect(suggestCard([], cards, target, 100)).not.toBeNull();
 	});
 });
