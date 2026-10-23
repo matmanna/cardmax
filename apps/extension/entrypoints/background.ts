@@ -198,6 +198,12 @@ export default defineBackground(() => {
 		.getAll()
 		.then(({ origins }) => log("granted sites", origins ?? []));
 
+	// Chrome hides checkout pages until the user grants sites, so ask on install.
+	browser.runtime.onInstalled.addListener(({ reason }) => {
+		if (reason !== "install") return;
+		browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") });
+	});
+
 	browser.runtime.onMessageExternal.addListener(
 		(message, sender, sendResponse) => {
 			handle(message, sender)
