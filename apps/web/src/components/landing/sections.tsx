@@ -120,6 +120,33 @@ export function Privacy() {
 						<p>Card numbers, purchases, or browsing history.</p>
 					</div>
 				</div>
+				<div className="lp-ai">
+					<h3>Where AI is used, and where it isn't.</h3>
+					<p>
+						The AI never learns which stores you browse or which card you pick.
+						It only sees a storefront photo you choose to text.
+					</p>
+					<div className="lp-facts">
+						<div data-accent>
+							<span>No AI</span>
+							<p>
+								Picking your card. Plain math on your device, from the store and
+								your cards.
+							</p>
+						</div>
+						<div data-accent>
+							<span>No AI</span>
+							<p>Texting a store name. We match it with rules, not a model.</p>
+						</div>
+						<div>
+							<span>Only for photos</span>
+							<p>
+								The photo itself, with location data stripped. Not your number,
+								your cards, or your account.
+							</p>
+						</div>
+					</div>
+				</div>
 			</Reveal>
 		</section>
 	);

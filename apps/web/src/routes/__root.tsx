@@ -55,13 +55,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
-	// The landing page brings its own light layout and nav.
+	// The landing page brings its own layout and nav; the app reuses its look.
 	const isLanding = useRouterState({
 		select: (state) => state.location.pathname === "/",
 	});
 
 	return (
-		<html lang="en" className={isLanding ? undefined : "dark"}>
+		<html lang="en">
 			<head>
 				<HeadContent />
 			</head>
@@ -69,7 +69,7 @@ function RootDocument() {
 				{isLanding ? (
 					<Outlet />
 				) : (
-					<div className="grid h-svh grid-rows-[auto_1fr]">
+					<div className="platform grid min-h-svh grid-rows-[auto_1fr]">
 						<Header />
 						<Outlet />
 					</div>
