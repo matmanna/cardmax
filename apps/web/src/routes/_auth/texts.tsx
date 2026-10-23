@@ -4,6 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+	buttonShape,
+	Page,
+	PageHeader,
+	Panel,
+} from "@/components/platform/page";
 import { orpc } from "@/utils/orpc";
 
 // Paper: Platform › "06 Text agent".
@@ -66,72 +72,81 @@ function RouteComponent() {
 	}
 
 	return (
-		<div className="mx-auto w-full max-w-3xl space-y-6 p-6">
-			<div>
-				<h1 className="text-2xl font-semibold tracking-tight">Text agent</h1>
-				<p className="text-muted-foreground text-sm">
-					Text a store name or a storefront photo and get the card to use.
-				</p>
-			</div>
+		<Page>
+			<PageHeader
+				title="Text agent"
+				subtitle="Text a store name or a storefront photo and get the card to use."
+			/>
 
-			<section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
-				<div>
-					<h2 className="font-semibold">Linked phone</h2>
-					{status.isPending && <p className="text-sm">Loading…</p>}
-					{status.data?.linked && (
-						<p className="text-muted-foreground text-sm">
-							(•••) •••-{status.data.last4} · linked{" "}
-							{new Date(status.data.linkedAt).toLocaleDateString()}
-						</p>
-					)}
-					{status.data && !status.data.linked && !linkCode.data && (
-						<p className="text-muted-foreground text-sm">
-							No phone linked yet.
-						</p>
-					)}
-					{linkCode.data && !status.data?.linked && (
-						<p className="text-sm">
-							Text{" "}
-							<code className="bg-muted rounded px-2 py-1 font-mono">
-								{linkCode.data.code}
-							</code>{" "}
-							to the Pointmaxx number. It works once and expires{" "}
-							{new Date(linkCode.data.expiresAt).toLocaleTimeString()}.
-						</p>
-					)}
-				</div>
-				<div className="flex gap-2">
-					{status.data?.linked ? (
+			<Panel>
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<div>
+						<h2 className="text-sm font-semibold">Linked phone</h2>
+						{status.isPending && <p className="text-sm">Loading…</p>}
+						{status.data?.linked && (
+							<p className="text-muted-foreground text-[13px] leading-[18px]">
+								(•••) •••-{status.data.last4} · linked{" "}
+								{new Date(status.data.linkedAt).toLocaleDateString()}
+							</p>
+						)}
+						{status.data && !status.data.linked && !linkCode.data && (
+							<p className="text-muted-foreground text-[13px] leading-[18px]">
+								No phone linked yet.
+							</p>
+						)}
+						{linkCode.data && !status.data?.linked && (
+							<p className="text-sm">
+								Text{" "}
+								<code className="bg-muted rounded px-2 py-1 font-mono">
+									{linkCode.data.code}
+								</code>{" "}
+								to the Pointmaxx number. It works once and expires{" "}
+								{new Date(linkCode.data.expiresAt).toLocaleTimeString()}.
+							</p>
+						)}
+					</div>
+					<div className="flex gap-2">
+						{status.data?.linked ? (
+							<Button
+								className={buttonShape}
+								type="button"
+								variant="outline"
+								disabled={unlink.isPending}
+								onClick={() => unlink.mutate({})}
+							>
+								Unlink
+							</Button>
+						) : (
+							<Button
+								className={buttonShape}
+								type="button"
+								disabled={linkCode.isPending}
+								onClick={() => linkCode.mutate({})}
+							>
+								{linkCode.data ? "New code" : "Get a link code"}
+							</Button>
+						)}
 						<Button
 							type="button"
 							variant="outline"
-							disabled={unlink.isPending}
-							onClick={() => unlink.mutate({})}
+							className={buttonShape}
+							onClick={refreshStatus}
 						>
-							Unlink
+							Refresh
 						</Button>
-					) : (
-						<Button
-							type="button"
-							disabled={linkCode.isPending}
-							onClick={() => linkCode.mutate({})}
-						>
-							{linkCode.data ? "New code" : "Get a link code"}
-						</Button>
-					)}
-					<Button type="button" variant="outline" onClick={refreshStatus}>
-						Refresh
-					</Button>
+					</div>
 				</div>
-			</section>
+			</Panel>
 
-			<section className="bg-muted space-y-3 rounded-xl p-4">
-				<div className="flex items-baseline justify-between">
-					<h2 className="font-semibold">Try it here</h2>
+			<Panel
+				tone="muted"
+				title="Try it here"
+				action={
 					<span className="text-muted-foreground text-xs">
 						Same answer you'd get by text
 					</span>
-				</div>
+				}
+			>
 				<form
 					className="flex flex-wrap gap-2"
 					onSubmit={(event) => {
@@ -143,13 +158,13 @@ function RouteComponent() {
 					}}
 				>
 					<input
-						className="bg-background min-w-48 flex-1 rounded-md border px-3 py-2 text-sm"
+						className="bg-background min-w-48 flex-1 rounded-lg border px-3 py-2 text-sm"
 						placeholder="Type a store, like whole foods"
 						value={text}
 						maxLength={200}
 						onChange={(event) => setText(event.target.value)}
 					/>
-					<label className="bg-background cursor-pointer rounded-md border px-3 py-2 text-sm font-medium">
+					<label className="bg-background cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium">
 						{photo ? "Change photo" : "Add photo"}
 						<input
 							type="file"
@@ -159,6 +174,7 @@ function RouteComponent() {
 						/>
 					</label>
 					<Button
+						className={buttonShape}
 						type="submit"
 						disabled={ask.isPending || (!text.trim() && !photo)}
 					>
@@ -185,13 +201,13 @@ function RouteComponent() {
 					Photos have location data removed, go to Anthropic for this one
 					answer, and aren't saved.
 				</p>
-			</section>
+			</Panel>
 
-			<p className="text-muted-foreground text-sm">
+			<p className="text-muted-foreground text-[13px] leading-[18px]">
 				Texts go through Twilio and your carrier, so they can read them.
 				Pointmaxx never asks for card numbers or amounts, and doesn't keep your
 				messages after replying.
 			</p>
-		</div>
+		</Page>
 	);
 }

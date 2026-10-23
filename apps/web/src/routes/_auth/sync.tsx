@@ -5,6 +5,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import {
+	buttonShape,
+	Page,
+	PageHeader,
+	Panel,
+} from "@/components/platform/page";
 import { ENV } from "@/env";
 import { authClient } from "@/lib/auth-client";
 import { type ExtensionReply, sendToExtension } from "@/lib/extension";
@@ -114,42 +120,42 @@ function RouteComponent() {
 	);
 
 	return (
-		<div className="mx-auto w-full max-w-3xl space-y-6 p-6">
-			<div>
-				<h1 className="text-2xl font-bold">Sync your wallet</h1>
-				<p className="text-muted-foreground text-sm">
-					Only card issuer and product move between this device and your
-					account. No card numbers, purchases, or browsing.
-				</p>
-			</div>
+		<Page>
+			<PageHeader
+				title="Chrome sync"
+				subtitle="Only card issuer and product move between this device and your account. No card numbers, purchases, or browsing."
+			/>
 
-			<section className="flex flex-wrap items-center justify-between gap-3 border p-4">
-				<div>
-					<h2 className="font-semibold">Connect the extension</h2>
-					<p className="text-muted-foreground text-sm">
-						After this, changes in the extension save to your account and your
-						account fills the extension. Disconnect any time from the popup.
-					</p>
+			<Panel>
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<div>
+						<h2 className="text-sm font-semibold">Connect the extension</h2>
+						<p className="text-muted-foreground text-[13px] leading-[18px]">
+							After this, changes in the extension save to your account and your
+							account fills the extension. Disconnect any time from the popup.
+						</p>
+					</div>
+					<Button
+						className={buttonShape}
+						type="button"
+						disabled={connect.isPending || device.status !== "ready"}
+						onClick={() => connect.mutate({})}
+					>
+						Connect and sync automatically
+					</Button>
 				</div>
-				<Button
-					type="button"
-					disabled={connect.isPending || device.status !== "ready"}
-					onClick={() => connect.mutate({})}
-				>
-					Connect and sync automatically
-				</Button>
-			</section>
+			</Panel>
 
 			<div className="grid gap-4 md:grid-cols-2">
-				<section className="space-y-3 border p-4">
-					<h2 className="font-semibold">This device (extension)</h2>
+				<Panel title="This device (extension)">
 					{device.status === "loading" && <p>Reading the extension…</p>}
 					{device.status === "error" && (
-						<p className="text-red-500">{device.message}</p>
+						<p className="text-destructive text-[13px]">{device.message}</p>
 					)}
 					{device.status === "ready" && <CardList cards={device.wallet} />}
 					<div className="flex flex-wrap gap-2">
 						<Button
+							className={buttonShape}
 							type="button"
 							disabled={device.status !== "ready" || saveToAccount.isPending}
 							onClick={() =>
@@ -158,14 +164,18 @@ function RouteComponent() {
 						>
 							Save to account
 						</Button>
-						<Button type="button" variant="outline" onClick={readDevice}>
+						<Button
+							type="button"
+							variant="outline"
+							className={buttonShape}
+							onClick={readDevice}
+						>
 							Refresh
 						</Button>
 					</div>
-				</section>
+				</Panel>
 
-				<section className="space-y-3 border p-4">
-					<h2 className="font-semibold">Your account (server)</h2>
+				<Panel title="Your account">
 					{account.isPending && <p>Loading…</p>}
 					{account.data === null && <p>Nothing synced yet.</p>}
 					{account.data && (
@@ -178,6 +188,7 @@ function RouteComponent() {
 					)}
 					<div className="flex flex-wrap gap-2">
 						<Button
+							className={buttonShape}
 							type="button"
 							disabled={!account.data || device.status === "loading"}
 							onClick={() => loadOntoDevice(accountCards)}
@@ -185,6 +196,7 @@ function RouteComponent() {
 							Load onto this device
 						</Button>
 						<Button
+							className={buttonShape}
 							type="button"
 							variant="destructive"
 							disabled={!account.data || removeFromAccount.isPending}
@@ -193,11 +205,11 @@ function RouteComponent() {
 							Remove from account
 						</Button>
 					</div>
-				</section>
+				</Panel>
 			</div>
 
 			<PhonePanel />
-		</div>
+		</Page>
 	);
 }
 
@@ -226,9 +238,8 @@ function PhonePanel() {
 	);
 
 	return (
-		<section className="space-y-3 border p-4">
-			<h2 className="font-semibold">Text agent</h2>
-			<p className="text-muted-foreground text-sm">
+		<Panel title="Text agent">
+			<p className="text-muted-foreground text-[13px] leading-[18px]">
 				Text a store name and get the card in your synced wallet that earns the
 				most there. Your texts pass through the messaging provider and your
 				carrier, and both can read them.
@@ -237,6 +248,7 @@ function PhonePanel() {
 				<div className="flex flex-wrap items-center gap-3">
 					<p>Linked to the number ending in {status.data.last4}.</p>
 					<Button
+						className={buttonShape}
 						type="button"
 						variant="outline"
 						disabled={unlink.isPending}
@@ -256,6 +268,7 @@ function PhonePanel() {
 					)}
 					<div className="flex flex-wrap gap-2">
 						<Button
+							className={buttonShape}
 							type="button"
 							disabled={createCode.isPending}
 							onClick={() => createCode.mutate({})}
@@ -263,23 +276,30 @@ function PhonePanel() {
 							{pending ? "New code" : "Get link code"}
 						</Button>
 						{pending && (
-							<Button type="button" variant="outline" onClick={refreshStatus}>
+							<Button
+								type="button"
+								variant="outline"
+								className={buttonShape}
+								onClick={refreshStatus}
+							>
 								I sent it
 							</Button>
 						)}
 					</div>
 				</div>
 			)}
-		</section>
+		</Panel>
 	);
 }
 
 function CardList({ cards }: { cards: WalletCard[] }) {
 	if (!cards.length) return <p>No cards.</p>;
 	return (
-		<ul className="list-disc pl-5 text-sm">
+		<ul className="divide-y text-sm">
 			{cards.map((card) => (
-				<li key={card.cardId}>{cardNames.get(card.cardId) ?? card.cardId}</li>
+				<li key={card.cardId} className="py-2">
+					{cardNames.get(card.cardId) ?? card.cardId}
+				</li>
 			))}
 		</ul>
 	);
