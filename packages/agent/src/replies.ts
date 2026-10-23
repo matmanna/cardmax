@@ -63,6 +63,8 @@ export function recommendationReply(
 	merchant: MerchantGuess,
 	ranked: Recommendation[],
 	catalog: CardProduct[],
+	// A catalog card the user doesn't hold that earns more here (see suggestCard).
+	suggestion?: Recommendation | null,
 ): string {
 	const byId = new Map(catalog.map((card) => [card.id, card]));
 	const [best, next] = ranked;
@@ -80,6 +82,11 @@ export function recommendationReply(
 	} else if (next) {
 		lines.push(
 			`Tied: ${cardLabel(byId.get(next.cardId), next.cardId)}, ${next.reason}.`,
+		);
+	}
+	if (suggestion) {
+		lines.push(
+			`Not in your wallet: ${cardLabel(byId.get(suggestion.cardId), suggestion.cardId)}, ${suggestion.reason}, about $${suggestion.estimatedRewardUsd.toFixed(2)} per $100.`,
 		);
 	}
 	if (merchant.confidence !== "high") {

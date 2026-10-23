@@ -123,6 +123,13 @@ describe("recommendations", () => {
 		expect(reply).toContain(privacyNotice);
 	});
 
+	test("names a better card the wallet doesn't hold, same as the popup", async () => {
+		const store = linked(["citi-double-cash"]);
+		const reply = await send(store, "target.com");
+		expect(reply).toContain("Top earner: Citi Double Cash");
+		expect(reply).toContain("Not in your wallet: Target Circle Card");
+	});
+
 	test("replies never tell the user what to do with money", async () => {
 		const store = linked([
 			"citi-double-cash",

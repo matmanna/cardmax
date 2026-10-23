@@ -64,3 +64,26 @@ export function recommend(
 		})
 		.sort((a, b) => b.estimatedRewardUsd - a.estimatedRewardUsd);
 }
+
+// The best card in the whole catalog for this store, when the wallet doesn't
+// hold it and it earns more than the best held card (or the wallet is empty).
+// The popup and the text agent both use this, so they never disagree.
+export function suggestCard(
+	wallet: WalletCard[],
+	catalog: CardProduct[],
+	merchant: MerchantGuess,
+	amountUsd: number,
+	centsPerPoint = 1,
+): Recommendation | null {
+	const everyCard = catalog.map((card) => ({ cardId: card.id, addedAt: "" }));
+	const [top] = recommend(
+		everyCard,
+		catalog,
+		merchant,
+		amountUsd,
+		centsPerPoint,
+	);
+	if (!top || wallet.some((held) => held.cardId === top.cardId)) return null;
+	const [best] = recommend(wallet, catalog, merchant, amountUsd, centsPerPoint);
+	return top.estimatedRewardUsd > (best?.estimatedRewardUsd ?? 0) ? top : null;
+}

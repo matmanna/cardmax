@@ -8,6 +8,7 @@ import {
 	type RankedListing,
 	rankListings,
 	recommend,
+	suggestCard,
 	toListingQuery,
 	type WalletCard,
 } from "@cardmax/core";
@@ -99,21 +100,14 @@ export function PageTab({
 	);
 	const [best, ...rest] = ranked;
 
-	// The best card in the whole catalog for this store, offered when the wallet
-	// has nothing, or something worse. Same math, so it never contradicts "Pay with".
-	const [top] = recommend(
-		catalog.cards.map((card) => ({ cardId: card.id, addedAt: "" })),
+	// Same rule as the text agent, so the popup and texts never disagree.
+	const suggestion = suggestCard(
+		wallet,
 		catalog.cards,
 		merchant,
 		amount,
 		settings.centsPerPoint,
 	);
-	const suggestion =
-		top &&
-		!wallet.some((held) => held.cardId === top.cardId) &&
-		top.estimatedRewardUsd > (best?.estimatedRewardUsd ?? 0)
-			? top
-			: null;
 
 	async function addCard(cardId: string) {
 		await updateWallet((current) =>
@@ -303,7 +297,10 @@ export function PageTab({
 					{lookup.state === "error" && (
 						<p className="note error">{lookup.message}</p>
 					)}
-					{lookup.state === "done" && (
+					{lookup.state === "done" && !lookup.results.length && (
+						<p className="note">No other stores list this item right now.</p>
+					)}
+					{lookup.state === "done" && lookup.results.length > 0 && (
 						<ol className="rows listings">
 							{lookup.results.map(({ listing, best: card, netPriceUsd }) => (
 								<li key={listing.url}>

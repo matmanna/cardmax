@@ -2,6 +2,7 @@ import {
 	catalog,
 	guessMerchant,
 	recommend,
+	suggestCard,
 	type WalletCard,
 } from "@cardmax/core";
 
@@ -119,7 +120,8 @@ export async function answerFor(
 function walletReply(hostname: string, wallet: WalletCard[]): string {
 	const merchant = guessMerchant(hostname);
 	const ranked = recommend(wallet, catalog, merchant, perHundred);
-	return recommendationReply(merchant, ranked, catalog);
+	const suggestion = suggestCard(wallet, catalog, merchant, perHundred);
+	return recommendationReply(merchant, ranked, catalog, suggestion);
 }
 
 function catalogReply(hostname: string): string {
