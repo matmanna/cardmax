@@ -67,7 +67,9 @@ export default function SignUpForm({
 
 	return (
 		<div className="mx-auto mt-10 w-full max-w-md p-6">
-			<h1 className="mb-6 text-center text-3xl font-bold">Create Account</h1>
+			<h1 className="mb-6 text-center text-3xl font-bold">
+				Create your account
+			</h1>
 
 			<form
 				onSubmit={(e) => {
@@ -194,7 +196,7 @@ export default function SignUpForm({
 				<Button
 					variant="link"
 					onClick={onSwitchToSignIn}
-					className="text-indigo-600 hover:text-indigo-800"
+					className="text-muted-foreground hover:text-foreground underline underline-offset-4"
 				>
 					Already have an account? Sign In
 				</Button>

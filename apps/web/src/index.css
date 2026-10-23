@@ -1,2 +1,32 @@
 @import "@cardmax/ui/globals.css";
 @import "./components/landing/landing.css";
+
+/* The app wears the landing page's palette and type. */
+.platform {
+	--background: #ffffff;
+	--foreground: #0b1b2b;
+	--card: #ffffff;
+	--card-foreground: #0b1b2b;
+	--popover: #ffffff;
+	--popover-foreground: #0b1b2b;
+	--primary: #0b1b2b;
+	--primary-foreground: #ffffff;
+	--secondary: #f4f6f8;
+	--secondary-foreground: #0b1b2b;
+	--muted: #f4f6f8;
+	--muted-foreground: #5b6b7c;
+	--accent: #f4f6f8;
+	--accent-foreground: #0b1b2b;
+	--border: #e3e8ef;
+	--input: #e3e8ef;
+	--ring: #0a7a52;
+	--font-sans: "Geist Variable", system-ui, sans-serif;
+	background: #ffffff;
+	color: #0b1b2b;
+	font-family: "Geist Variable", system-ui, sans-serif;
+}
+
+.platform h1,
+.platform h2 {
+	letter-spacing: -0.03em;
+}
