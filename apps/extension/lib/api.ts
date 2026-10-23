@@ -13,7 +13,7 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { z } from "zod";
 
-const apiUrl = import.meta.env.WXT_API_URL as string | undefined;
+import { apiUrl } from "./origins";
 
 export const apiConfigured = Boolean(apiUrl);
 

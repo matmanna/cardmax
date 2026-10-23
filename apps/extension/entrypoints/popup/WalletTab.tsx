@@ -1,6 +1,7 @@
 import type { WalletCard } from "@cardmax/core";
 
 import type { Catalog } from "@/lib/catalog";
+import { webOrigin } from "@/lib/origins";
 import { removeAllSiteAccess } from "@/lib/permissions";
 import {
 	type Link,
@@ -10,11 +11,6 @@ import {
 	updateWallet,
 } from "@/lib/storage";
 import { disconnect } from "@/lib/sync";
-
-// Same fallback as externally_connectable in wxt.config.ts.
-const webOrigin =
-	(import.meta.env.WXT_WEB_ORIGIN as string | undefined) ??
-	"http://localhost:3001";
 
 type Props = {
 	wallet: WalletCard[];
