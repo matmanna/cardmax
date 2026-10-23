@@ -8,6 +8,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	server: {
 		port: 3001,
+		// Quick tunnels for testing the Photon and Twilio webhooks against the dev server.
+		allowedHosts: [".trycloudflare.com"],
 	},
 	resolve: {
 		tsconfigPaths: true,
@@ -41,7 +43,16 @@ export default defineConfig({
 		tanstackStart(),
 		// Bun's symlinked node_modules aren't traced into Vercel functions, so bundle
 		// every dependency into the server build on Vercel.
-		nitro({ noExternals: Boolean(process.env.VERCEL) }),
+		nitro({
+			noExternals: process.env.VERCEL
+				? [/^(?!nice-grpc|@grpc\/grpc-js)/]
+				: false,
+			// Spectrum's iMessage client resolves these at runtime, so a bundled
+			// build has to ship them as real packages.
+			traceDeps: process.env.VERCEL
+				? ["nice-grpc*", "nice-grpc-common*", "@grpc/grpc-js*"]
+				: [],
+		}),
 		viteReact(),
 	],
 });

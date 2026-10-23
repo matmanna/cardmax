@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { StepEdge } from "./edge";
 import { Phone, Popup } from "./mocks";
 import { useInView, usePrefersReducedMotion } from "./motion";
 
@@ -57,30 +58,33 @@ export function Steps() {
 				<ol aria-label="How it works">
 					{STEPS.map((s, i) => (
 						<li key={s.title} data-active={i === step || undefined}>
-							<button
-								type="button"
-								aria-current={i === step || undefined}
-								onClick={() => {
-									setStep(i);
-									setPicked(true);
-								}}
-							>
-								<span className="lp-step-title">
-									<span className="lp-step-num">
-										{String(i + 1).padStart(2, "0")}
+							{i > 0 && <StepEdge delay={i * 0.5} />}
+							<div className="lp-step-card">
+								<button
+									type="button"
+									aria-current={i === step || undefined}
+									onClick={() => {
+										setStep(i);
+										setPicked(true);
+									}}
+								>
+									<span className="lp-step-num">{i + 1}</span>
+									<span className="lp-step-text">
+										<span className="lp-step-title">{s.title}</span>
+										{i === step && (
+											<span className="lp-step-body">{s.body}</span>
+										)}
 									</span>
-									{s.title}
-								</span>
-								{i === step && <span className="lp-step-body">{s.body}</span>}
-							</button>
-							{i === step && (
-								<span
-									className="lp-step-bar"
-									key={`${step}-${playing}`}
-									data-playing={playing || undefined}
-									style={{ animationDuration: `${stepMs}ms` }}
-								/>
-							)}
+								</button>
+								{i === step && (
+									<span
+										className="lp-step-bar"
+										key={`${step}-${playing}`}
+										data-playing={playing || undefined}
+										style={{ animationDuration: `${stepMs}ms` }}
+									/>
+								)}
+							</div>
 						</li>
 					))}
 				</ol>
